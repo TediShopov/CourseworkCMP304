@@ -13,13 +13,31 @@ public class RouleteWheelSelection : GASelectionAlgorithmBase<float>
         this.RouletteDistibutions = new List<float>();
     }
 
+    public float BiggestPercentageOfDistribution = 0;
+    public float SmallestPercentageOfDistribution = float.MaxValue;
+
+
     void CalculateRouletteDistributions()
     {
         float previousFitness = 0;
+        BiggestPercentageOfDistribution = 0;
+        SmallestPercentageOfDistribution = 1;
         RouletteDistibutions.Clear();
         for (int i = 0; i < _geneticAglorithm.Population.Count; i++)
         {
            float fitness= _geneticAglorithm.Population[i].Fitness/ _geneticAglorithm.FitnessSum;
+
+           if (fitness > BiggestPercentageOfDistribution)
+           {
+                BiggestPercentageOfDistribution=fitness;
+           }
+
+           if (fitness < SmallestPercentageOfDistribution)
+           {
+               SmallestPercentageOfDistribution = fitness;
+           }
+
+
            RouletteDistibutions.Add(previousFitness+fitness);
            previousFitness = previousFitness + fitness;
 

@@ -10,6 +10,7 @@ public class BallAgentManager
 	public List<GameObject> BallAgents;
     public Vector3 BallStartPosition;
     public float MaxImpulse;
+    public GameObject TargetToSet;
 	public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject agentPrefab)
     {
         this.MaxImpulse=maxImpulse;
@@ -18,7 +19,9 @@ public class BallAgentManager
         BallAgents = new List<GameObject>();
         for (int i = 0; i < numberOfBalls; i++)
         {
-			BallAgents.Add(GameObject.Instantiate(agentPrefab, startPosition, new Quaternion()));
+            var ballAdd = GameObject.Instantiate(agentPrefab, startPosition, new Quaternion());
+            ballAdd.GetComponent<AgentThrowableBall>().Target = GameObject.FindGameObjectWithTag("Target");
+            BallAgents.Add(GameObject.Instantiate(agentPrefab, startPosition, new Quaternion()));
 		}
     }
 
@@ -43,6 +46,7 @@ public class BallAgentManager
         {
             ball.transform.position = BallStartPosition;
             ball.GetComponent<AgentThrowableBall>().ResetHitSurface();
+            ball.GetComponent<AgentThrowableBall>().Target = TargetToSet;
         }
 	}
 
@@ -58,92 +62,7 @@ public class BallAgentManager
 		}
 	}
 
-    //  public Vector3 CalculateThrowImpulse(float[] genes)
-    //  {
-    //      if (genes.Length%3 !=0)
-    //      {
-    //          throw new ArgumentException();
-    //      }
-
-    //      Vector3 throwImpulse = new Vector3();
-
-    //      int rangeOfGenomesToVectorComponent = genes.Length / 3;
-
-
-    ////15 -- >
-    ////0  -4
-    //for (int x = rangeOfGenomesToVectorComponent*0; x < rangeOfGenomesToVectorComponent * 1; x++)
-    //      {
-    //          throwImpulse.x += genes[x];
-    //      }
-    ////5--9
-    //      for (int y = rangeOfGenomesToVectorComponent * 1; y < rangeOfGenomesToVectorComponent * 2; y++)
-    //      {
-    //          throwImpulse.y += genes[y];
-    //      }
-    ////10,11,12,13,14
-    //      for (int z = rangeOfGenomesToVectorComponent * 2; z < rangeOfGenomesToVectorComponent * 3; z++)
-    //      {
-    //          throwImpulse.z += genes[z];
-    //      }
-
-    //      throwImpulse /= rangeOfGenomesToVectorComponent;
-
-
-    //return throwImpulse;
-    //  }
-
-    //public Vector3 CalculateThrowImpulse(float[] genes)
-    //   {
-    //       if (genes.Length % 3 != 0)
-    //       {
-    //           throw new ArgumentException();
-    //       }
-
-
-    //       int rangeOfGenomesToVectorComponent = genes.Length / 3;
-
-    //	Vector3 throwImpulse = new Vector3();
-
-
-    //       //XZ direction - ordered by relevance
-    //       float angleXZ = 0;
-    //       for (int i = rangeOfGenomesToVectorComponent*0; i < rangeOfGenomesToVectorComponent; i++)
-    //       {
-
-    //		//
-    //		//In -0.5 to 0.5 range
-    //		float angleFromGenome = genes[i] - 0.5f;
-    //		//Multiply by 360 / x angle
-    //           angleFromGenome *= 360.0f / rangeOfGenomesToVectorComponent;
-    //           angleXZ += angleFromGenome;
-    //       }
-
-    //	//XY direction degress - ordered by relevance [ from -360/x to 360 /x ] [ <- /2] [-< /2]
-    //       float angleXy =0;
-
-    //       for (int i = rangeOfGenomesToVectorComponent * 1; i < rangeOfGenomesToVectorComponent*2; i++)
-    //       {
-
-    //           //
-    //           //In -0.5 to 0.5 range
-    //           float angleFromGenome = genes[i] - 0.5f;
-    //           //Multiply by 360 / x angle
-    //           angleFromGenome *= 90.0f / rangeOfGenomesToVectorComponent;
-    //           angleXy += angleFromGenome;
-    //       }
-
-    //	throwImpulse.x = Mathf.Cos(angleXZ) * Mathf.Cos(angleXy);
-    //	throwImpulse.z = Mathf.Sin(angleXZ) * Mathf.Cos(angleXy);
-    //	throwImpulse.y = Mathf.Sin(angleXy);
-
-
-    //       float force = genes.Skip(rangeOfGenomesToVectorComponent*2).Take(rangeOfGenomesToVectorComponent).Sum()*5;
-
-    //       throwImpulse *= force;
-
-    //	return throwImpulse;
-    //   }
+ 
 
     public Vector3 CalculateThrowImpulse(float[] genes)
     {
