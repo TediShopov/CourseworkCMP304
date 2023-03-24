@@ -1,0 +1,5 @@
+Current issues with the GA:
+	Fitness Value (Current) - Assigns the fitness scores based on angle to the target on the XZ target and distance from the hit point of the ball thrown and the target. Both this criterias are in the range [0 ... 1] and multiplied by a weight factor in the Unity Editor.
+	Crossover Stategy - Pick the middle point of the Rotation Quaternion of the phenotype (ShotInfo class that 'decodes' genes) of the parents and arithmetic average of the throw impulse
+	Selection Strategy - Roullete wheel 
+	Observable pitfalls -  Given a really good attemp at scoring a point --> ball hits the board (good enough angle and distance to basket is really small ==> about 95% of maximum fittnes based on the current function), and any other visible wrong solution (ball thrown straight to the ground)  - Their crossover, which is completely deterministic as of now, yield as a result which throws the ball with high force and misses the basket --> distance to target is much larger and fitness is way lower that the desirable. 
