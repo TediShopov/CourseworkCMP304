@@ -11,6 +11,7 @@ public class BallAgentManager
     public Vector3 BallStartPosition;
     public float MaxImpulse;
     public GameObject TargetToSet;
+    public float SecondsAlive = 10.0f;
 	public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject AgentPrefab)
     {
         this.MaxImpulse=maxImpulse;
@@ -31,7 +32,7 @@ public class BallAgentManager
 		{
             AgentThrowableBall ballScript = agent.GetComponent<AgentThrowableBall>();
 			//All balls have to have hit a surfac eor the ring of the basket
-			if (ballScript && !ballScript.IsHitSurfaceOrScored)
+			if (ballScript && ballScript.IsAcitve)
 			{
 				return false;
 			}
@@ -40,13 +41,16 @@ public class BallAgentManager
 		return true;
 	}
 
-	public void ResetBallPositions()
+	public void ResetBalls()
 	{
-        foreach (var ball in BallAgents)
+        foreach (var ballObj in BallAgents)
         {
+            var ball = ballObj.GetComponent<AgentThrowableBall>();
             ball.transform.position = BallStartPosition;
-            ball.GetComponent<AgentThrowableBall>().ResetHitSurface();
-            ball.GetComponent<AgentThrowableBall>().Target = TargetToSet;
+            ball.SecondBeforeDisable = SecondsAlive;
+            ball.ResetBall();
+            ball.Target = TargetToSet;
+			
         }
 	}
 

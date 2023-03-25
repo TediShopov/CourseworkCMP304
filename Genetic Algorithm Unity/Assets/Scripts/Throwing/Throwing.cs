@@ -149,7 +149,7 @@ public class Throwing : MonoBehaviour
         this._target = GameObject.FindWithTag("Target");
         agentManager.TargetToSet = _target;
         agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
-        agentManager.ResetBallPositions();
+        agentManager.ResetBalls();
         agentManager.ThrowBalls();
     }
 
@@ -261,7 +261,7 @@ public class Throwing : MonoBehaviour
                 GeneticAglorithm.NewGeneration();
                 bestJump = GeneticAglorithm.BestFitness;
                 agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
-                agentManager.ResetBallPositions();
+                agentManager.ResetBalls();
                 
                 agentManager.ThrowBalls();
 
@@ -272,12 +272,6 @@ public class Throwing : MonoBehaviour
 		
 		}
 	}
-
-    private float GetWorstThrowDistance()
-    {
-        return agentManager.BallAgents.Max(x =>
-            Vector3.Distance(x.GetComponent<AgentThrowableBall>().HitPosition, _target.transform.position));
-    }
 
     private float GetRandomGene()
     {
@@ -296,51 +290,6 @@ public class Throwing : MonoBehaviour
 
     public float WeightOfAngle = 20.0f;
     public float WeightOfDistance = 20.0f;
-
-    private float FitnessFunction(int index)
-	{
-		// Go through each gene in a member of the population and make their fitness equal to their jump strength minus the game ticks
-		// they spent in the DeadZone
-		float score = 0;
-		DNA<float> dna = GeneticAglorithm.Population[index];
-
-
-        var ball= agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
-        float starightDistanceFromStart = Vector3.Distance(_agentStartPosition, _target.transform.position);
-        float startToHit = Vector3.Distance(_agentStartPosition, ball.HitPosition);
-
-        Vector3 directionOfHoop = _target.transform.position - _agentStartPosition ;
-        directionOfHoop.y = 0;
-        //Vector3 directionOfHit = ball.HitPosition - _agentStartPosition.position;
-        //directionOfHit.y = 0;
-        Vector3 directionOfThrow = new ShotInfo(dna.Genes,MaxImpulse).Rotation * Vector3.forward;
-
-
-		float closeToOptimalDistance = Math.Abs(startToHit - starightDistanceFromStart);
-        float angle = Vector3.Angle(directionOfThrow, directionOfHoop);
-     
-		float normalizedPointsFromAngle = ConvertFromRange(180-angle, 0, 180);
-        normalizedPointsFromAngle = normalizedPointsFromAngle * normalizedPointsFromAngle * normalizedPointsFromAngle *
-                                    normalizedPointsFromAngle;
-	
-
-        float maxPointFromDistance = 50;
-        float distanceFromHoop = maxPointFromDistance - Vector3.Distance(ball.HitPosition, _target.transform.position);
-        distanceFromHoop = Math.Clamp(distanceFromHoop, 0, maxPointFromDistance);
-        float normalizedPointFromDistance = ConvertFromRange(distanceFromHoop, 0, maxPointFromDistance);
-        normalizedPointFromDistance =
-            normalizedPointFromDistance * normalizedPointFromDistance * normalizedPointFromDistance;
-
-
-        score = normalizedPointsFromAngle * WeightOfAngle + normalizedPointFromDistance * WeightOfDistance;
-
-        if (score>=WeightOfAngle + WeightOfDistance)
-        {
-            int a = 3;
-            
-        }
-        return score;
-	}
 
 	public void onButtonClickUnique()
 	{
