@@ -14,20 +14,7 @@ public class GeneticAglorithm<T> {
 	private Random random;
 	public float FitnessSum;
 
-	//public GeneticAglorithm(int populationSize, int dnaSize, Random random, Func<T> getRandomGene, Func<int, float> fitnessFunction, float mutationRate = 0.01f)
-	//{
-	//	Generation = 1;
-	//	MutationRate = mutationRate;
-	//	Population = new List<DNA<T>>();
-	//	this.random = random;
 
-	//	BestGenes = new T[dnaSize];
-
-	//	for(int i = 0; i < populationSize; i++)
-	//	{
-	//		Population.Add(new DNA<T>(dnaSize, random, getRandomGene, fitnessFunction, shouldInitGenes: true));
-	//	}
-	//}
 
     private Func<DNA<T>> ChooseParent;
 

@@ -673,7 +673,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BallCount: 25
-  mutationRate: 0.1
+  mutationRate: 0.2
   timeScale: 10
   onGoingStatusText: {fileID: 1576094717}
   bestFitnessText: {fileID: 365438388}
@@ -686,7 +686,7 @@ MonoBehaviour:
     type: 3}
   ObstacleCourse: {fileID: 5226358218195815246, guid: 78af549af91757c448de778915b0e2c1,
     type: 3}
-  SelectionAlgorithm: {fileID: 160986132}
+  SelectionAlgorithm: {fileID: 1448647904}
   CrossoverAlgorithmType: 1
   ARange: {x: 0.2, y: 0.8}
   KRange: {x: 0, y: 3}
@@ -1000,6 +1000,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 160986131}
+  - {fileID: 1448647903}
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1526,6 +1527,53 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
+--- !u!1 &1448647902
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1448647903}
+  - component: {fileID: 1448647904}
+  m_Layer: 0
+  m_Name: Sotchastic Universal Sampling
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1448647903
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448647902}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 690510601}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1448647904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448647902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cff8c65565030048a58f7e9c21c1dc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RouletteDistibutions: []
+  BiggestPercentageOfDistribution: 0
+  SmallestPercentageOfDistribution: 3.4028235e+38
 --- !u!1 &1576094715
 GameObject:
   m_ObjectHideFlags: 0

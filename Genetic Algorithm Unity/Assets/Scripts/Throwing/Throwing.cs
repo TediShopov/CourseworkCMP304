@@ -189,9 +189,9 @@ public class Throwing : MonoBehaviour
         ObstacleCourse = Instantiate(ObstacleCourse);
         this._target = GameObject.FindWithTag("Target");
         agentManager.TargetToSet = _target;
-        agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
-        agentManager.ResetBalls();
-        agentManager.ThrowBalls();
+        //agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
+        //agentManager.ResetBalls();
+        //agentManager.ThrowBalls();
     }
 
     public float WeightOfClosesDistanceH = 20;
@@ -228,6 +228,7 @@ public class Throwing : MonoBehaviour
         return score;
     }
 
+    private bool _initializedFirstGeneration = false;
 
     // Update is called once per frame
     void Update()
@@ -240,30 +241,32 @@ public class Throwing : MonoBehaviour
 
 		if (running)
 		{
-            //_currentIterations++;
-            //if (_currentIterations >= _maxIterations)
-            //{
-            //    running = false;
-            //}
-
-			// If the agents are currently jumping, stop the script if the ALL enter the DeadZone
-			if (agentManager.AreAllBallsFinished())
+            if (!_initializedFirstGeneration)
             {
-
-                //WorstThrowDistance = GetWorstThrowDistance();
-                GeneticAglorithm.NewGeneration();
-                bestJump = GeneticAglorithm.BestFitness;
                 agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
                 agentManager.ResetBalls();
-                
                 agentManager.ThrowBalls();
+                _initializedFirstGeneration = true;
+            }
+            else
+            {
+                if (agentManager.AreAllBallsFinished())
+                {
+
+                    //WorstThrowDistance = GetWorstThrowDistance();
+                    GeneticAglorithm.NewGeneration();
+                    bestJump = GeneticAglorithm.BestFitness;
+                    agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
+                    agentManager.ResetBalls();
+
+                    agentManager.ThrowBalls();
 
 
 
-				
-			}
-		
-		}
+
+                }
+            }
+        }
 	}
 
     private float GetRandomGene()
