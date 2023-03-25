@@ -33,17 +33,21 @@ public class DNA<T> {
         this.random = dna.random;
         this.getRandomGene = dna.getRandomGene;
         this.fitnessFunction = dna.fitnessFunction;
-        //if (shouldInitGenes)
-        //{
-        //    for (int i = 0; i < Genes.Length; i++)
-        //    {
-        //        Genes[i] = getRandomGene();
-        //    }
-        //}
-    }
+        for (int i = 0; i < Genes.Length; i++)
+		{
+			Genes[i] = dna.Genes[i];
+		}
+		//if (shouldInitGenes)
+		//{
+		//    for (int i = 0; i < Genes.Length; i++)
+		//    {
+		//        Genes[i] = getRandomGene();
+		//    }
+		//}
+	}
 
 
-	public float CalculateFitness(int index)
+    public float CalculateFitness(int index)
 	{
 		Fitness = fitnessFunction(index);
 

@@ -684,13 +684,13 @@ MonoBehaviour:
   buttonText: {fileID: 625640032}
   AgentPrefab: {fileID: 7471209736755041769, guid: c0ed1db56caff7944b14a3c9d3bc6e56,
     type: 3}
-  ObstacleCourse: {fileID: 6710099059241876483, guid: 0054945aa8024714ca19d55d27b380d9,
+  ObstacleCourse: {fileID: 5226358218195815246, guid: 78af549af91757c448de778915b0e2c1,
     type: 3}
   SelectionAlgorithm: {fileID: 160986132}
+  CrossoverAlgorithmType: 1
+  ARange: {x: 0.2, y: 0.8}
+  KRange: {x: 0, y: 3}
   MaxImpulse: 15
-  SimpleArithmeticK: 0
-  RandomAlphaMin: 0.4
-  RandomAlphaMax: 0.6
   WeightOfClosesDistanceH: 100
   ValueOfYClose: 20
   WeightOfAngle: 20

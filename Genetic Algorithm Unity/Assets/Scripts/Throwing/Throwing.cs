@@ -5,10 +5,12 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Xml.Serialization;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using Quaternion = UnityEngine.Quaternion;
 using Random = System.Random;
+using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 
@@ -28,7 +30,7 @@ public class ShotInfo
         float[] values = new float[FloatGenes.Length];
         for (int i = 0; i < FloatGenes.Length-1; i++)
         {
-            values[i] = Throwing.ConvertFromRange(FloatGenes[i],0,1,-90,90);
+            values[i] = Helpers.ConvertFromRange(FloatGenes[i],0,1,-90,90);
         }
 
         values[values.Length - 1] = FloatGenes[FloatGenes.Length - 1];
@@ -36,7 +38,7 @@ public class ShotInfo
 
         //for (int i = 0; i < 3; i++)
         //{
-        //    values[i] = Throwing.ConvertFromRange(values[i], 0.0f, 1.0f, -180.0f, 180.0f);
+        //    values[i] = Throwing.Helpers.ConvertFromRange(values[i], 0.0f, 1.0f, -180.0f, 180.0f);
         //}
 
         //Set the rotation using the first 4 values
@@ -69,8 +71,8 @@ public class ShotInfo
         }
 
 
-       toReturn.Add(Throwing.ConvertFromRange(euler.x,-90,90,0,1));
-       toReturn.Add(Throwing.ConvertFromRange(euler.y, -90, 90, 0, 1));
+       toReturn.Add(Helpers.ConvertFromRange(euler.x,-90,90,0,1));
+       toReturn.Add(Helpers.ConvertFromRange(euler.y, -90, 90, 0, 1));
 
         // toReturn.Add(euler.z / 360.0f);
 
@@ -112,7 +114,16 @@ public class Throwing : MonoBehaviour
      private GameObject _target;
 
     public GASelectionAlgorithmBase<float> SelectionAlgorithm;
-	public GeneticAglorithm<float> GeneticAglorithm;     // Genetic Aglorithm with each Gene being a float
+
+    [Header(" Arithmetic Crossover Params")]
+    //public float Alpha;
+    public FloatBasedCrossoverAlgorithms.Type CrossoverAlgorithmType;
+    public Vector2 ARange;
+    public Vector2Int KRange;
+    public FloatBasedRecombination CrossoverAlgorithm;
+
+
+    public GeneticAglorithm<float> GeneticAglorithm;     // Genetic Aglorithm with each Gene being a float
 	private BallAgentManager agentManager;      // Manager for handling a jumping agents we need to make
 	private System.Random random;           // Random for the RNG
 	private bool running = false;           // Flag for if the GeneticAglorithm is to run
@@ -125,14 +136,44 @@ public class Throwing : MonoBehaviour
     private float WorstThrowDistance = 1000;
 
     public float MaxImpulse = 15.0f;
-	// Use this for initialization
-	void Start()
+    // Use this for initialization
+
+    private FloatBasedRecombination InitCrossoverAlgorithm()
+    {
+        FloatBasedRecombination toReturn=null;
+        //Get crossover algorithm 
+        if (CrossoverAlgorithmType == FloatBasedCrossoverAlgorithms.Type.SinglePointArithmetic)
+        {
+            toReturn = new SingleArithmetic();
+        }
+        else if (CrossoverAlgorithmType == FloatBasedCrossoverAlgorithms.Type.SimplePointArithmetic)
+        {
+            toReturn = new SimpleArithmetic();
+
+        }
+        else if (CrossoverAlgorithmType == FloatBasedCrossoverAlgorithms.Type.WholeArithmetic)
+        {
+            toReturn = new WholeArithmetic();
+
+        }
+
+        toReturn.AlphaRange = ARange;
+        toReturn.KRange = KRange;
+        toReturn.Random=new Random();
+        return toReturn;
+    }
+
+    void Start()
 	{
 		// Create the Random class
 		random = new System.Random();
 
         // Create our Agent Manager and give them the height and width of grid along with agent prefab
         agentManager = new BallAgentManager(BallCount, _agentStartPosition, MaxImpulse, AgentPrefab);
+
+
+        CrossoverAlgorithm = InitCrossoverAlgorithm();
+
 
         // Create genetic algorithm class
         GeneticAglorithm = new GeneticAglorithm<float>(
@@ -141,7 +182,7 @@ public class Throwing : MonoBehaviour
             GetRandomGene,
             FFClosestPoint, 
             SelectionAlgorithm.SelectionStrategy,
-            WholeArithmeticRecombination,
+            CrossoverAlgorithm.Recombine,
             mutationRate: mutationRate);
         SelectionAlgorithm.SetGeneticAlgorthm(GeneticAglorithm);
 
@@ -151,54 +192,6 @@ public class Throwing : MonoBehaviour
         agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
         agentManager.ResetBalls();
         agentManager.ThrowBalls();
-    }
-
-
-    [Header("Simple Arithmetic Corssover Params")]
-    public int SimpleArithmeticK;
-    //public float Alpha;
-    [Range(0,1)]
-    public float RandomAlphaMin;
-    [Range(0, 1)]
-    public float RandomAlphaMax;
-
-
-    public DNA<float> WholeArithmeticRecombination(DNA<float> parent, DNA<float> otherParent)
-    {
-        DNA<float> child = new DNA<float>(parent);
-
-        float a = ConvertFromRange((float)new Random().NextDouble(), 0, 1, RandomAlphaMin, RandomAlphaMax);
-        for (int i = 0; i < child.Genes.Length; i++)
-        {
-            child.Genes[i] = a * parent.Genes[i] + (1.0f - a) * otherParent.Genes[i];
-        }
-
-        return child;
-    }
-
-
-    public DNA<float> AverageAngleCrossover(DNA<float> parent, DNA<float> otherParent)
-    {
-        DNA<float> child = new DNA<float>(parent);
-        
-        ShotInfo childShot = new ShotInfo(child.Genes, MaxImpulse);
-        ShotInfo parentShot = new ShotInfo(parent.Genes, MaxImpulse);
-        ShotInfo otherParentShot = new ShotInfo(otherParent.Genes, MaxImpulse);
-
-        //get the angle that is in the middle of the two parents rotations
-        float rnd = (float)new Random().NextDouble();
-        rnd = ConvertFromRange(rnd, 0, 1, 0.5f, 1.0f);
-        childShot.Rotation = Quaternion.Lerp(parentShot.Rotation, otherParentShot.Rotation, rnd).normalized;
-
-		//average the throw impulse
-        childShot.InitialImpulse = Mathf.Lerp(parentShot.InitialImpulse, otherParentShot.InitialImpulse, rnd);
-
-        var newGenes = childShot.GetGenes();
-        for (int i = 0; i < newGenes.Length; i++)
-        {
-			child.Genes[i] = newGenes[i];
-        }
-        return child;
     }
 
     public float WeightOfClosesDistanceH = 20;
@@ -212,7 +205,7 @@ public class Throwing : MonoBehaviour
         var ball = agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
         float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
         closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
-        closeToOptimalDistance = ConvertFromRange(closeToOptimalDistance, 0, 20, 0, 1);
+        closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 20, 0, 1);
         closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
 
 
@@ -224,7 +217,7 @@ public class Throwing : MonoBehaviour
             scoreFromPassingY =
                 worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.y);
             scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0.2f, worstDistance);
-            scoreFromPassingY = ConvertFromRange(scoreFromPassingY, 0, worstDistance, 0, 1);
+            scoreFromPassingY = Helpers.ConvertFromRange(scoreFromPassingY, 0, worstDistance, 0, 1);
         }
         else
         {
@@ -278,15 +271,7 @@ public class Throwing : MonoBehaviour
         return (float)random.NextDouble();
     }
 
-    public static float ConvertFromRange(float _input_value_tobe_converted, float _input_range_min,
-        float _input_range_max, float _output_range_min=0.0f,
-        float _output_range_max=1.0f)
-    {
-        float diffOutputRange = Math.Abs((_output_range_max - _output_range_min));
-        float diffInputRange = Math.Abs((_input_range_max - _input_range_min));
-        float convFactor = (diffOutputRange / diffInputRange);
-        return (_output_range_min + (convFactor * (_input_value_tobe_converted - _input_range_min)));
-    }
+   
 
     public float WeightOfAngle = 20.0f;
     public float WeightOfDistance = 20.0f;
