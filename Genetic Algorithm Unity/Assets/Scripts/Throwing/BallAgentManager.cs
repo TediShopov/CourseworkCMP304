@@ -11,7 +11,7 @@ public class BallAgentManager
     public Vector3 BallStartPosition;
     public float MaxImpulse;
     public GameObject TargetToSet;
-	public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject agentPrefab)
+	public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject AgentPrefab)
     {
         this.MaxImpulse=maxImpulse;
         ;
@@ -19,9 +19,9 @@ public class BallAgentManager
         BallAgents = new List<GameObject>();
         for (int i = 0; i < numberOfBalls; i++)
         {
-            var ballAdd = GameObject.Instantiate(agentPrefab, startPosition, new Quaternion());
+            var ballAdd = GameObject.Instantiate(AgentPrefab, startPosition, new Quaternion());
             ballAdd.GetComponent<AgentThrowableBall>().Target = GameObject.FindGameObjectWithTag("Target");
-            BallAgents.Add(GameObject.Instantiate(agentPrefab, startPosition, new Quaternion()));
+            BallAgents.Add(GameObject.Instantiate(AgentPrefab, startPosition, new Quaternion()));
 		}
     }
 

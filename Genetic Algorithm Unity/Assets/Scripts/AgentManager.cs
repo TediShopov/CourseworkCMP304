@@ -8,7 +8,7 @@ public class AgentManager {
 
 	public List<GameObject> agents;
 
-	public AgentManager(int gridHeight, int gridWidth, GameObject agentPrefab)
+	public AgentManager(int gridHeight, int gridWidth, GameObject AgentPrefab)
 	{
 		this.gridWidth = gridWidth;
 		this.gridHeight = gridHeight;
@@ -22,7 +22,7 @@ public class AgentManager {
 		{
 			for(int j = 0; j < gridWidth; j++)
 			{
-				agents.Add(GameObject.Instantiate(agentPrefab, new Vector3(startX + j*2, 0, startZ + i*2), new Quaternion()));
+				agents.Add(GameObject.Instantiate(AgentPrefab, new Vector3(startX + j*2, 0, startZ + i*2), new Quaternion()));
 			}
 		}
 	}

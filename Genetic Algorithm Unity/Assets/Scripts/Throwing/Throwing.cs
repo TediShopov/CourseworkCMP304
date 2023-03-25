@@ -102,10 +102,12 @@ public class Throwing : MonoBehaviour
 	[SerializeField] Text buttonText;
 
 	[Header("Agent Prefab")]
-	[SerializeField] GameObject agentPrefab;
+	[SerializeField] public GameObject AgentPrefab;
 
-    [SerializeField] private Transform agentStartPosition;
-    [SerializeField] private Transform targetPosition;
+    [SerializeField] public GameObject ObstacleCourse;
+
+     private Vector3 _agentStartPosition=new Vector3(0,0,0) ;
+     private GameObject _target;
 
     public GASelectionAlgorithmBase<float> SelectionAlgorithm;
 	public GeneticAglorithm<float> GeneticAglorithm;     // Genetic Aglorithm with each Gene being a float
@@ -128,7 +130,7 @@ public class Throwing : MonoBehaviour
 		random = new System.Random();
 
 		// Create our Agent Manager and give them the height and width of grid along with agent prefab
-		agentManager = new BallAgentManager(BallCount,agentStartPosition.position,MaxImpulse, agentPrefab);
+		agentManager = new BallAgentManager(BallCount,_agentStartPosition,MaxImpulse, AgentPrefab);
         agentManager.TargetToSet=GameObject.FindWithTag("Target");
 
 		// Create genetic algorithm class
@@ -142,7 +144,8 @@ public class Throwing : MonoBehaviour
             mutationRate: mutationRate);
         SelectionAlgorithm.SetGeneticAlgorthm(GeneticAglorithm);
 
-
+        ObstacleCourse = Instantiate(ObstacleCourse);
+        this._target = GameObject.FindWithTag("Target");
         agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
         agentManager.ResetBallPositions();
 
@@ -190,7 +193,7 @@ public class Throwing : MonoBehaviour
     //    float scoreFromPassingY = 0;
     //    if (ball.BiggestYReached < targetPosition.transform.position.y)
     //    {
-    //        float worstDistance = MathF.Abs(agentStartPosition.transform.position.y - targetPosition.transform.position.y);
+    //        float worstDistance = MathF.Abs(_agentStartPosition.transform.position.y - targetPosition.transform.position.y);
     //        scoreFromPassingY =
     //            worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.transform.position.y);
     //        scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0, worstDistance);
@@ -214,15 +217,16 @@ public class Throwing : MonoBehaviour
         float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
         closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
         closeToOptimalDistance = ConvertFromRange(closeToOptimalDistance, 0, 20, 0, 1);
-        closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
+        //closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
 
 
         float scoreFromPassingY = 0;
-        if (ball.BiggestYReached < targetPosition.transform.position.y)
+        var targetPosition = _target.transform.position;
+        if (ball.BiggestYReached < targetPosition.y)
         {
-            float worstDistance = MathF.Abs(agentStartPosition.transform.position.y - targetPosition.transform.position.y);
+            float worstDistance = MathF.Abs(_agentStartPosition.y - targetPosition.y);
             scoreFromPassingY =
-                worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.transform.position.y);
+                worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.y);
             scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0, worstDistance);
             scoreFromPassingY = ConvertFromRange(scoreFromPassingY, 0, worstDistance, 0, 1);
         }
@@ -357,7 +361,7 @@ public class Throwing : MonoBehaviour
     private float GetWorstThrowDistance()
     {
         return agentManager.BallAgents.Max(x =>
-            Vector3.Distance(x.GetComponent<AgentThrowableBall>().HitPosition, targetPosition.position));
+            Vector3.Distance(x.GetComponent<AgentThrowableBall>().HitPosition, _target.transform.position));
     }
 
     private float GetRandomGene()
@@ -400,12 +404,12 @@ public class Throwing : MonoBehaviour
 
 
         var ball= agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
-        float starightDistanceFromStart = Vector3.Distance(agentStartPosition.position, targetPosition.position);
-        float startToHit = Vector3.Distance(agentStartPosition.position, ball.HitPosition);
+        float starightDistanceFromStart = Vector3.Distance(_agentStartPosition, _target.transform.position);
+        float startToHit = Vector3.Distance(_agentStartPosition, ball.HitPosition);
 
-        Vector3 directionOfHoop = targetPosition.position - agentStartPosition.position ;
+        Vector3 directionOfHoop = _target.transform.position - _agentStartPosition ;
         directionOfHoop.y = 0;
-        //Vector3 directionOfHit = ball.HitPosition - agentStartPosition.position;
+        //Vector3 directionOfHit = ball.HitPosition - _agentStartPosition.position;
         //directionOfHit.y = 0;
         Vector3 directionOfThrow = new ShotInfo(dna.Genes,MaxImpulse).Rotation * Vector3.forward;
 
@@ -419,7 +423,7 @@ public class Throwing : MonoBehaviour
 	
 
         float maxPointFromDistance = 50;
-        float distanceFromHoop = maxPointFromDistance - Vector3.Distance(ball.HitPosition, targetPosition.position);
+        float distanceFromHoop = maxPointFromDistance - Vector3.Distance(ball.HitPosition, _target.transform.position);
         distanceFromHoop = Math.Clamp(distanceFromHoop, 0, maxPointFromDistance);
         float normalizedPointFromDistance = ConvertFromRange(distanceFromHoop, 0, maxPointFromDistance);
         normalizedPointFromDistance =

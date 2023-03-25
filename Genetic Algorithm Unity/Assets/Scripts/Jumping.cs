@@ -26,7 +26,7 @@
 //	[SerializeField] Text buttonText;
 
 //	[Header("Agent Prefab")]
-//	[SerializeField] GameObject agentPrefab;
+//	[SerializeField] GameObject AgentPrefab;
 
 //	private GeneticAglorithm<float> ga;		// Genetic Aglorithm with each Gene being a float
 //	private AgentManager agentManager;		// Manager for handling a jumping agents we need to make
@@ -40,7 +40,7 @@
 //		random = new System.Random();
 
 //		// Create our Agent Manager and give them the height and width of grid along with agent prefab
-//		agentManager = new AgentManager(gridHeight, gridWidth, agentPrefab);
+//		agentManager = new AgentManager(gridHeight, gridWidth, AgentPrefab);
 
 //		// Create genetic algorithm class
 //		ga = new GeneticAglorithm<float>(agentManager.agents.Count, innerCount, random, GetRandomGene, FitnessFunction, mutationRate:mutationRate);
