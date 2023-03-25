@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.UI;
 using Quaternion = UnityEngine.Quaternion;
@@ -27,7 +28,7 @@ public class ShotInfo
         float[] values = new float[FloatGenes.Length];
         for (int i = 0; i < FloatGenes.Length-1; i++)
         {
-            values[i] = FloatGenes[i] * 360;
+            values[i] = Throwing.ConvertFromRange(FloatGenes[i],0,1,-90,90);
         }
 
         values[values.Length - 1] = FloatGenes[FloatGenes.Length - 1];
@@ -41,7 +42,7 @@ public class ShotInfo
         //Set the rotation using the first 4 values
         //this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], Math.Clamp(FloatGenes[3],0,1)).normalized;
         //  this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], FloatGenes[3]).normalized;
-        Vector3 eulerAngles = new Vector3(values[0], values[1], values[2]);
+        Vector3 eulerAngles = new Vector3(values[0], values[1], 0);
         this.Rotation = Quaternion.Euler(eulerAngles).normalized;
 
         this.InitialImpulse = values[values.Length-1] * MaxImpulse;
@@ -68,9 +69,10 @@ public class ShotInfo
         }
 
 
-        toReturn.Add(euler.x / 360.0f);
-        toReturn.Add(euler.y / 360.0f);
-        toReturn.Add(euler.z / 360.0f);
+       toReturn.Add(Throwing.ConvertFromRange(euler.x,-90,90,0,1));
+       toReturn.Add(Throwing.ConvertFromRange(euler.y, -90, 90, 0, 1));
+
+        // toReturn.Add(euler.z / 360.0f);
 
         //toReturn.Add(this.Rotation.w);
         toReturn.Add(this.InitialImpulse/ MaxImpulse);
@@ -129,34 +131,56 @@ public class Throwing : MonoBehaviour
 		// Create the Random class
 		random = new System.Random();
 
-		// Create our Agent Manager and give them the height and width of grid along with agent prefab
-		agentManager = new BallAgentManager(BallCount,_agentStartPosition,MaxImpulse, AgentPrefab);
-        agentManager.TargetToSet=GameObject.FindWithTag("Target");
+        // Create our Agent Manager and give them the height and width of grid along with agent prefab
+        agentManager = new BallAgentManager(BallCount, _agentStartPosition, MaxImpulse, AgentPrefab);
 
-		// Create genetic algorithm class
-		GeneticAglorithm = new GeneticAglorithm<float>(
+        // Create genetic algorithm class
+        GeneticAglorithm = new GeneticAglorithm<float>(
             agentManager.BallAgents.Count,
-            4, random, 
+            3, random, 
             GetRandomGene,
             FFClosestPoint, 
             SelectionAlgorithm.SelectionStrategy,
-            AverageAngleCrossover,
+            WholeArithmeticRecombination,
             mutationRate: mutationRate);
         SelectionAlgorithm.SetGeneticAlgorthm(GeneticAglorithm);
 
         ObstacleCourse = Instantiate(ObstacleCourse);
         this._target = GameObject.FindWithTag("Target");
+        agentManager.TargetToSet = _target;
         agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
         agentManager.ResetBallPositions();
-
         agentManager.ThrowBalls();
+    }
+
+
+    [Header("Simple Arithmetic Corssover Params")]
+    public int SimpleArithmeticK;
+    //public float Alpha;
+    [Range(0,1)]
+    public float RandomAlphaMin;
+    [Range(0, 1)]
+    public float RandomAlphaMax;
+
+
+    public DNA<float> WholeArithmeticRecombination(DNA<float> parent, DNA<float> otherParent)
+    {
+        DNA<float> child = new DNA<float>(parent);
+
+        float a = ConvertFromRange((float)new Random().NextDouble(), 0, 1, RandomAlphaMin, RandomAlphaMax);
+        for (int i = 0; i < child.Genes.Length; i++)
+        {
+            child.Genes[i] = a * parent.Genes[i] + (1.0f - a) * otherParent.Genes[i];
+        }
+
+        return child;
     }
 
 
     public DNA<float> AverageAngleCrossover(DNA<float> parent, DNA<float> otherParent)
     {
         DNA<float> child = new DNA<float>(parent);
-
+        
         ShotInfo childShot = new ShotInfo(child.Genes, MaxImpulse);
         ShotInfo parentShot = new ShotInfo(parent.Genes, MaxImpulse);
         ShotInfo otherParentShot = new ShotInfo(otherParent.Genes, MaxImpulse);
@@ -179,35 +203,7 @@ public class Throwing : MonoBehaviour
 
     public float WeightOfClosesDistanceH = 20;
     public float ValueOfYClose = 15;
-    //private float FFClosestPoint(int index)
-    //{
-    //    float score = 0;
-    //    DNA<float> dna = GeneticAglorithm.Population[index];
-    //    var ball = agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
-    //    float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
-    //    closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
-    //    closeToOptimalDistance = ConvertFromRange(closeToOptimalDistance, 0, 20, 0, 1);
-    //    closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
-
-
-    //    float scoreFromPassingY = 0;
-    //    if (ball.BiggestYReached < targetPosition.transform.position.y)
-    //    {
-    //        float worstDistance = MathF.Abs(_agentStartPosition.transform.position.y - targetPosition.transform.position.y);
-    //        scoreFromPassingY =
-    //            worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.transform.position.y);
-    //        scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0, worstDistance);
-    //        scoreFromPassingY = ConvertFromRange(scoreFromPassingY, 0, worstDistance, 0, 1);
-    //    }
-    //    else
-    //    {
-    //        scoreFromPassingY = 1;
-    //    }
-
-    //    score += closeToOptimalDistance * WeightOfClosesDistanceH + scoreFromPassingY * ValueOfYClose;
-    //    return score;
-    //}
-
+  
 
     private float FFClosestPoint(int index)
     {
@@ -217,17 +213,17 @@ public class Throwing : MonoBehaviour
         float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
         closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
         closeToOptimalDistance = ConvertFromRange(closeToOptimalDistance, 0, 20, 0, 1);
-        //closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
+        closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
 
 
-        float scoreFromPassingY = 0;
+        float scoreFromPassingY = 0.2f;
         var targetPosition = _target.transform.position;
         if (ball.BiggestYReached < targetPosition.y)
         {
             float worstDistance = MathF.Abs(_agentStartPosition.y - targetPosition.y);
             scoreFromPassingY =
                 worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.y);
-            scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0, worstDistance);
+            scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0.2f, worstDistance);
             scoreFromPassingY = ConvertFromRange(scoreFromPassingY, 0, worstDistance, 0, 1);
         }
         else
@@ -239,87 +235,6 @@ public class Throwing : MonoBehaviour
         return score;
     }
 
-
-    public DNA<float> SinglePointAverageRealValueCrossover(DNA<float> parent, DNA<float> otherParent)
-    {
-        DNA<float> child = new DNA<float>(parent);
-
-        for (int i = 0; i < child.Genes.Length; i++)
-        {
-            if (i%2==0)
-            {
-				child.Genes[i] = (parent.Genes[i] + otherParent.Genes[i]) / 2.0f;
-
-			}
-            else
-            {
-                child.Genes[i] = parent.Genes[i];
-
-            }
-		}
-
-        return child;
-    }
-	//public DNA<float> AverageRealValueCrossover(DNA<float> parent, DNA<float> otherParent)
-	//{
-	//    DNA<float> child = new DNA<float>(parent);
-
-	//    for (int i = 0; i < child.Genes.Length; i++)
-	//    {
-	//        child.Genes[i] = (parent.Genes[i] + otherParent.Genes[i]) / 2.0f;
-	//    }
-
-	//    return child;
-	//}
-
-	public DNA<float> SinglePointCrossover(DNA<float> parent, DNA<float> otherParent)
-    {
-        DNA<float> child = new DNA<float>(parent);
-
-        for (int i = 0; i < child.Genes.Length; i++)
-        {
-            if (i<child.Genes.Length/2)
-            {
-                child.Genes[i] = parent.Genes[i];
-            }
-            else
-            {
-				child.Genes[i] = otherParent.Genes[i];
-
-			}
-        }
-
-        return child;
-    }
-
-	//public DNA<float> CrossoverDefault(DNA<float> parent, DNA<float> otherParent)
- //   {
- //       DNA<float> child = new DNA<float>(parent);
-
- //       for (int i = 0; i < child.Genes.Length; i++)
- //       {
- //           child.Genes[i] = random.NextDouble() < 0.5 ? parent.Genes[i] : otherParent.Genes[i];
- //       }
-
- //       return child;
- //   }
-
-	//private DNA<float> ChooseParent()
- //   {
- //       double randomNumber = random.NextDouble() * GeneticAglorithm.FitnessSum;
-
- //       for (int i = 0; i < GeneticAglorithm.Population.Count; i++)
- //       {
- //           if (randomNumber < GeneticAglorithm.Population[i].Fitness)
- //           {
- //               return GeneticAglorithm.Population[i];
- //           }
-
- //           randomNumber -= GeneticAglorithm.Population[i].Fitness;
- //       }
-
- //       return GeneticAglorithm.Population[random.Next(0, GeneticAglorithm.Population.Count)];
- //   }
 
     // Update is called once per frame
     void Update()
@@ -366,20 +281,7 @@ public class Throwing : MonoBehaviour
 
     private float GetRandomGene()
     {
-
-        //float[] genes = new float[count];
-        //for (int i = 0; i < count; i++)
-        //{
-        //    genes[i] = (float)random.NextDouble()*360;
-        //}
-
         return (float)random.NextDouble();
-        //// Generate a new jump value based on the current best jump (the higher the best jump, the greater the next random gene)
-        //float next = (float)random.NextDouble();
-        ////float value = (innerScale + bestJump) / (float)innerCount;
-        //      float value = (innerScale) / (float)innerCount;
-
-        //return (next * value);
     }
 
     public static float ConvertFromRange(float _input_value_tobe_converted, float _input_range_min,
