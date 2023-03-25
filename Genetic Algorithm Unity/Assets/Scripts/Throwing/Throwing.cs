@@ -17,16 +17,20 @@ public class ShotInfo
 	public float InitialImpulse { get;  set; }
 
     public float MaxImpulse { get; set; } = 1.0f;
+
+    
      
 
     public ShotInfo(float[] FloatGenes, float maxImpulse)
     {
         this.MaxImpulse = maxImpulse;
         float[] values = new float[FloatGenes.Length];
-        for (int i = 0; i < FloatGenes.Length; i++)
+        for (int i = 0; i < FloatGenes.Length-1; i++)
         {
-            values[i] = FloatGenes[i];
+            values[i] = FloatGenes[i] * 360;
         }
+
+        values[values.Length - 1] = FloatGenes[FloatGenes.Length - 1];
 
 
         //for (int i = 0; i < 3; i++)
@@ -36,11 +40,11 @@ public class ShotInfo
 
         //Set the rotation using the first 4 values
         //this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], Math.Clamp(FloatGenes[3],0,1)).normalized;
-        this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], FloatGenes[3]).normalized;
-        //Vector3 eulerAngles = new Vector3(values[0] , values[1] , values[2]);
-        //this.Rotation = Quaternion.Euler(eulerAngles).normalized;
+        //  this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], FloatGenes[3]).normalized;
+        Vector3 eulerAngles = new Vector3(values[0], values[1], values[2]);
+        this.Rotation = Quaternion.Euler(eulerAngles).normalized;
 
-        this.InitialImpulse = values[4] * MaxImpulse;
+        this.InitialImpulse = values[values.Length-1] * MaxImpulse;
         if (this.InitialImpulse> MaxImpulse)
         {
             int a = 3;
@@ -50,16 +54,23 @@ public class ShotInfo
     public float[] GetGenes()
     {
         var toReturn = new List<float>();
-        toReturn.Add(this.Rotation.x);
-        toReturn.Add(this.Rotation.y);
-        toReturn.Add(this.Rotation.z);
-        toReturn.Add(this.Rotation.w);
+        //toReturn.Add(this.Rotation.x);
+        //toReturn.Add(this.Rotation.y);
+        //toReturn.Add(this.Rotation.z);
+        //toReturn.Add(this.Rotation.w);
 
 
-        //var euler = this.Rotation.eulerAngles;
-        //toReturn.Add( Throwing.ConvertFromRange(euler.x, -180,180,0,1));
-        //toReturn.Add(Throwing.ConvertFromRange(euler.y, -180, 180, 0, 1));
-        //toReturn.Add(Throwing.ConvertFromRange(euler.z, -180, 180, 0, 1));
+        var euler = this.Rotation.eulerAngles;
+
+        if (euler.x < 0 || euler.y <0 || euler.z < 0)
+        {
+            int a = 3;
+        }
+
+
+        toReturn.Add(euler.x / 360.0f);
+        toReturn.Add(euler.y / 360.0f);
+        toReturn.Add(euler.z / 360.0f);
 
         //toReturn.Add(this.Rotation.w);
         toReturn.Add(this.InitialImpulse/ MaxImpulse);
@@ -123,7 +134,7 @@ public class Throwing : MonoBehaviour
 		// Create genetic algorithm class
 		GeneticAglorithm = new GeneticAglorithm<float>(
             agentManager.BallAgents.Count,
-            5, random, 
+            4, random, 
             GetRandomGene,
             FFClosestPoint, 
             SelectionAlgorithm.SelectionStrategy,
@@ -165,6 +176,36 @@ public class Throwing : MonoBehaviour
 
     public float WeightOfClosesDistanceH = 20;
     public float ValueOfYClose = 15;
+    //private float FFClosestPoint(int index)
+    //{
+    //    float score = 0;
+    //    DNA<float> dna = GeneticAglorithm.Population[index];
+    //    var ball = agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
+    //    float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
+    //    closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
+    //    closeToOptimalDistance = ConvertFromRange(closeToOptimalDistance, 0, 20, 0, 1);
+    //    closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
+
+
+    //    float scoreFromPassingY = 0;
+    //    if (ball.BiggestYReached < targetPosition.transform.position.y)
+    //    {
+    //        float worstDistance = MathF.Abs(agentStartPosition.transform.position.y - targetPosition.transform.position.y);
+    //        scoreFromPassingY =
+    //            worstDistance - MathF.Abs(ball.transform.position.y - targetPosition.transform.position.y);
+    //        scoreFromPassingY = Math.Clamp(scoreFromPassingY, 0, worstDistance);
+    //        scoreFromPassingY = ConvertFromRange(scoreFromPassingY, 0, worstDistance, 0, 1);
+    //    }
+    //    else
+    //    {
+    //        scoreFromPassingY = 1;
+    //    }
+
+    //    score += closeToOptimalDistance * WeightOfClosesDistanceH + scoreFromPassingY * ValueOfYClose;
+    //    return score;
+    //}
+
+
     private float FFClosestPoint(int index)
     {
         float score = 0;
@@ -190,9 +231,10 @@ public class Throwing : MonoBehaviour
             scoreFromPassingY = 1;
         }
 
-        score += closeToOptimalDistance * WeightOfClosesDistanceH + scoreFromPassingY * ValueOfYClose;
+        score += (closeToOptimalDistance * scoreFromPassingY) * (WeightOfClosesDistanceH + ValueOfYClose);
         return score;
     }
+
 
     public DNA<float> SinglePointAverageRealValueCrossover(DNA<float> parent, DNA<float> otherParent)
     {

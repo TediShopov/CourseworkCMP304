@@ -785,8 +785,8 @@ MonoBehaviour:
   targetPosition: {fileID: 1467937993}
   SelectionAlgorithm: {fileID: 160986132}
   MaxImpulse: 15
-  WeightOfClosesDistanceH: 20
-  ValueOfYClose: 40
+  WeightOfClosesDistanceH: 100
+  ValueOfYClose: 20
   WeightOfAngle: 20
   WeightOfDistance: 40
 --- !u!1 &548864101
@@ -1806,7 +1806,7 @@ PrefabInstance:
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 13.32
+      value: -11.67
       objectReference: {fileID: 0}
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
@@ -1821,7 +1821,7 @@ PrefabInstance:
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
@@ -1831,7 +1831,7 @@ PrefabInstance:
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
@@ -1846,7 +1846,7 @@ PrefabInstance:
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 8330083516164503570, guid: 995f41c25aa9df843b8925170e9b25bc,
         type: 3}
