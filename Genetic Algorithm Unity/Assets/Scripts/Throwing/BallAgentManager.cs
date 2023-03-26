@@ -12,6 +12,8 @@ public class BallAgentManager
     public float MaxImpulse;
     public GameObject TargetToSet;
     public float SecondsAlive = 10.0f;
+
+    public ShotPhenotypeRepresentation Phenotype;
 	public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject AgentPrefab)
     {
         this.MaxImpulse=maxImpulse;
@@ -46,9 +48,10 @@ public class BallAgentManager
         foreach (var ballObj in BallAgents)
         {
             var ball = ballObj.GetComponent<AgentThrowableBall>();
+           
+            ball.ResetBall();
             ball.transform.position = BallStartPosition;
             ball.SecondBeforeDisable = SecondsAlive;
-            ball.ResetBall();
             ball.Target = TargetToSet;
 			
         }
@@ -66,18 +69,7 @@ public class BallAgentManager
 		}
 	}
 
- 
-
-    public Vector3 CalculateThrowImpulse(float[] genes)
-    {
-        Vector3 throwImpulse=new Vector3();
-        ShotInfo shotInfo = new ShotInfo(genes, MaxImpulse);
-        throwImpulse = shotInfo.Rotation.normalized * Vector3.forward;
-        throwImpulse *= shotInfo.InitialImpulse;
-        return throwImpulse;
-    }
-
-
+    
 
     public void UpdateAgentThrowImpulse(List<DNA<float>> genomes)
 	{
@@ -90,9 +82,10 @@ public class BallAgentManager
 
 			AgentThrowableBall script = agent.GetComponent<AgentThrowableBall>();
 			if (script)
-			{
-				script.ThrowImpulse = CalculateThrowImpulse(dna.Genes);
-			}
+            {
+                Phenotype.DecodeGenes(dna.Genes);
+                script.ThrowImpulse = Phenotype.ShotImpulse;
+            }
 		}
 	}
 

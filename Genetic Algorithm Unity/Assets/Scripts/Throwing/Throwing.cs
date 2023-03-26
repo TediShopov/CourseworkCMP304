@@ -14,74 +14,6 @@ using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 
-public class ShotInfo
-{
-    public Quaternion Rotation { get; set; }
-	public float InitialImpulse { get;  set; }
-
-    public float MaxImpulse { get; set; } = 1.0f;
-
-    
-     
-
-    public ShotInfo(float[] FloatGenes, float maxImpulse)
-    {
-        this.MaxImpulse = maxImpulse;
-        float[] values = new float[FloatGenes.Length];
-        for (int i = 0; i < FloatGenes.Length-1; i++)
-        {
-            values[i] = Helpers.ConvertFromRange(FloatGenes[i],0,1,-90,90);
-        }
-
-        values[values.Length - 1] = FloatGenes[FloatGenes.Length - 1];
-
-
-        //for (int i = 0; i < 3; i++)
-        //{
-        //    values[i] = Throwing.Helpers.ConvertFromRange(values[i], 0.0f, 1.0f, -180.0f, 180.0f);
-        //}
-
-        //Set the rotation using the first 4 values
-        //this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], Math.Clamp(FloatGenes[3],0,1)).normalized;
-        //  this.Rotation = new Quaternion(FloatGenes[0], FloatGenes[1], FloatGenes[2], FloatGenes[3]).normalized;
-        Vector3 eulerAngles = new Vector3(values[0], values[1], 0);
-        this.Rotation = Quaternion.Euler(eulerAngles).normalized;
-
-        this.InitialImpulse = values[values.Length-1] * MaxImpulse;
-        if (this.InitialImpulse> MaxImpulse)
-        {
-            int a = 3;
-        }
-    }
-
-    public float[] GetGenes()
-    {
-        var toReturn = new List<float>();
-        //toReturn.Add(this.Rotation.x);
-        //toReturn.Add(this.Rotation.y);
-        //toReturn.Add(this.Rotation.z);
-        //toReturn.Add(this.Rotation.w);
-
-
-        var euler = this.Rotation.eulerAngles;
-
-        if (euler.x < 0 || euler.y <0 || euler.z < 0)
-        {
-            int a = 3;
-        }
-
-
-       toReturn.Add(Helpers.ConvertFromRange(euler.x,-90,90,0,1));
-       toReturn.Add(Helpers.ConvertFromRange(euler.y, -90, 90, 0, 1));
-
-        // toReturn.Add(euler.z / 360.0f);
-
-        //toReturn.Add(this.Rotation.w);
-        toReturn.Add(this.InitialImpulse/ MaxImpulse);
-		return toReturn.ToArray();
-    }
-}
-
 public class Throwing : MonoBehaviour
 {
 	[Header("Genetic Algorithm")]
@@ -138,6 +70,8 @@ public class Throwing : MonoBehaviour
     public float MaxImpulse = 15.0f;
     // Use this for initialization
 
+    public GameObject PhenotypeGameObject;
+
     private FloatBasedRecombination InitCrossoverAlgorithm()
     {
         FloatBasedRecombination toReturn=null;
@@ -189,6 +123,14 @@ public class Throwing : MonoBehaviour
         ObstacleCourse = Instantiate(ObstacleCourse);
         this._target = GameObject.FindWithTag("Target");
         agentManager.TargetToSet = _target;
+
+        //Try set phenotype
+        var pheno = PhenotypeGameObject.GetComponent<ShotPhenotypeRepresentation>();
+        if (pheno!=null)
+        {
+            agentManager.Phenotype = pheno;
+
+        }
         //agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
         //agentManager.ResetBalls();
         //agentManager.ThrowBalls();
@@ -302,24 +244,24 @@ public class Throwing : MonoBehaviour
 
 	private void UpdateText()
     {
-         var bestGenes= GeneticAglorithm.BestGenes;
+         //var bestGenes= GeneticAglorithm.BestGenes;
         
-         var bestThrowInfo = new ShotInfo(bestGenes,MaxImpulse);
+         //var bestThrowInfo = new ShotInfo(bestGenes,MaxImpulse);
         // If the script has been passed a valid Text object then update that text
         if (onGoingStatusText)
 		{
 			onGoingStatusText.text = agentManager.AreAllBallsFinished().ToString();
 		}
 
-        if (bestAngleWeighed)
-        {
-            bestAngleWeighed.text = "Angle Of Best" + (bestThrowInfo.Rotation * Vector3.forward).ToString();
-        }
+        //if (bestAngleWeighed)
+        //{
+        //    bestAngleWeighed.text = "Angle Of Best" + (bestThrowInfo.Rotation * Vector3.forward).ToString();
+        //}
 
-        if (bestDistanceWeighed)
-        {
-            bestDistanceWeighed.text = "Impulse Of Best" + bestThrowInfo.InitialImpulse.ToString();
-        }
+        //if (bestDistanceWeighed)
+        //{
+        //    bestDistanceWeighed.text = "Impulse Of Best" + bestThrowInfo.InitialImpulse.ToString();
+        //}
 
         if (bestFitnessText)
 		{
@@ -334,9 +276,9 @@ public class Throwing : MonoBehaviour
 		if (bestJumpStrength)
 		{
 			
-            Vector3 throwImpulse = agentManager.CalculateThrowImpulse(GeneticAglorithm.BestGenes);
+   //         Vector3 throwImpulse = agentManager.CalculateThrowImpulse(GeneticAglorithm.BestGenes);
 
-			bestJumpStrength.text = throwImpulse.ToString();
+			//bestJumpStrength.text = throwImpulse.ToString();
 		}
 	}
 }
