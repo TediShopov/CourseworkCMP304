@@ -705,7 +705,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BallCount: 25
-  mutationRate: 0.1
+  mutationRate: 0.3
   timeScale: 10
   onGoingStatusText: {fileID: 1576094717}
   bestFitnessText: {fileID: 365438388}
@@ -719,8 +719,8 @@ MonoBehaviour:
   ObstacleCourse: {fileID: 5226358218195815246, guid: 78af549af91757c448de778915b0e2c1,
     type: 3}
   SelectionAlgorithm: {fileID: 1448647904}
-  CrossoverAlgorithmType: 2
-  ARange: {x: 0.2, y: 0.8}
+  CrossoverAlgorithmType: 1
+  ARange: {x: 0.05, y: 0.95}
   KRange: {x: 0, y: 3}
   MaxImpulse: 15
   PhenotypeGameObject: {fileID: 2078206623}
@@ -1857,4 +1857,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b38ddd3d678e4748bdca1168959e75c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxImpulse: 15
+  MaxImpulse: 30

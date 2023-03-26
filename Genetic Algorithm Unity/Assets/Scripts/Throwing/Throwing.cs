@@ -114,7 +114,7 @@ public class Throwing : MonoBehaviour
             agentManager.BallAgents.Count,
             3, random, 
             GetRandomGene,
-            FFClosestPoint, 
+            GameScore, 
             SelectionAlgorithm.SelectionStrategy,
             CrossoverAlgorithm.Recombine,
             mutationRate: mutationRate);
@@ -138,7 +138,36 @@ public class Throwing : MonoBehaviour
 
     public float WeightOfClosesDistanceH = 20;
     public float ValueOfYClose = 15;
-  
+
+
+    private float GameScore(int index)
+    {
+        float score = 0;
+        DNA<float> dna = GeneticAglorithm.Population[index];
+        var ball = agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
+        float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
+        closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
+        closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
+      //  closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
+
+
+        var targetPosition = _target.transform.position;
+
+        int hitMultiplier = ball.ScoreModifiersHit + 1;
+        if (hitMultiplier>=2 && ball.IsHitTarget)
+        {
+            int a = 3;
+        }
+
+        if (ball.IsHitGround)
+        {
+            score = 0;
+        }
+       
+
+        score += (closeToOptimalDistance*hitMultiplier) * (WeightOfClosesDistanceH);
+        return score;
+    }
 
     private float FFClosestPoint(int index)
     {

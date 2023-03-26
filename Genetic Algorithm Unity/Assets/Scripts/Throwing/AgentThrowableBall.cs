@@ -6,6 +6,7 @@ public class AgentThrowableBall : MonoBehaviour
 {
     public bool IsAcitve;
     public bool IsHitTarget;
+    public bool IsHitGround;
     public int ScoreModifiersHit;
 
     public Vector3 ClosestPositionReached = Vector3.zero;
@@ -56,6 +57,8 @@ public class AgentThrowableBall : MonoBehaviour
     public void ResetBall()
     {
         IsAcitve = true;
+        IsHitTarget=false;
+        IsHitGround=false;
         ScoreModifiersHit = 0;
         BiggestYReached = 0;
         ClosestDistanceReached = float.MaxValue;
@@ -83,16 +86,32 @@ public class AgentThrowableBall : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (IsAcitve && collision.gameObject.CompareTag("Ground"))
+        if (IsAcitve)
         {
-            ScoreModifiersHit++;
+            if (!collision.gameObject.CompareTag("Ground"))
+            {
+                ScoreModifiersHit++;
+            }
+            else
+            {
+                IsHitGround = true;
+                IsAcitve = false;
+            }
         }
+
+       
     }
 
     void OnTriggerEnter(Collider collider)
     {
         if (IsAcitve && collider.gameObject.CompareTag("Target"))
         {
+            float currentDistance = Vector3.Distance(this.transform.position, Target.transform.position);
+            if (currentDistance < ClosestDistanceReached)
+            {
+                ClosestPositionReached = this.transform.position;
+                ClosestDistanceReached = currentDistance;
+            }
             IsAcitve = false;
             IsHitTarget = true;
         }

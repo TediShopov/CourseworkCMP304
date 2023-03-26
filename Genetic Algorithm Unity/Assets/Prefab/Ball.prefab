@@ -93,7 +93,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7471209736755041769}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: a78bd8d509a77554eaa343d2cf3a48ec, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -111,6 +111,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f779bf6f172a9547a367e4827ac058e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsAcitve: 0
+  IsHitTarget: 0
+  ScoreModifiersHit: 0
+  ClosestPositionReached: {x: 0, y: 0, z: 0}
+  ClosestDistanceReached: 3.4028235e+38
+  Target: {fileID: 0}
+  SecondBeforeDisable: 10
+  BiggestYReached: 0
 --- !u!54 &2280023371426596859
 Rigidbody:
   m_ObjectHideFlags: 0
