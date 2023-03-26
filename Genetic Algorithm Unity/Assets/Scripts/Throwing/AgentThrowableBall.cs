@@ -88,11 +88,11 @@ public class AgentThrowableBall : MonoBehaviour
     {
         if (IsAcitve)
         {
-            if (!collision.gameObject.CompareTag("Ground"))
+            if (collision.gameObject.layer == LayerMask.NameToLayer("ScoreModifiers"))
             {
                 ScoreModifiersHit++;
             }
-            else
+            else if (collision.gameObject.CompareTag("Ground"))
             {
                 IsHitGround = true;
                 IsAcitve = false;

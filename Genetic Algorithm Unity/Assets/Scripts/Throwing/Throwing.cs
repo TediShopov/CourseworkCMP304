@@ -29,10 +29,9 @@ public class Throwing : MonoBehaviour
 	[Header("Text Labels")]
 	[SerializeField] Text onGoingStatusText;
 	[SerializeField] Text bestFitnessText;
-    [SerializeField] Text bestDistanceWeighed;
-    [SerializeField] Text bestAngleWeighed;
-    [SerializeField] Text bestJumpStrength;
-	[SerializeField] Text numGenText;
+    [SerializeField] Text overallBestFitnessText;
+
+    [SerializeField] Text numGenText;
 
 	[Header("Button Text")]
 	[SerializeField] Text buttonText;
@@ -69,6 +68,9 @@ public class Throwing : MonoBehaviour
 
     public float MaxImpulse = 15.0f;
     // Use this for initialization
+
+    public float OverallBestFitnessAchieved = 0;
+    public float[] OverallBestGenes=null;
 
     public GameObject PhenotypeGameObject;
 
@@ -201,14 +203,31 @@ public class Throwing : MonoBehaviour
 
     private bool _initializedFirstGeneration = false;
 
+    void UpdateOverallBest()
+    {
+        if (GeneticAglorithm.BestFitness > OverallBestFitnessAchieved)
+        {
+            var bestGenes = GeneticAglorithm.BestGenes;
+            OverallBestGenes = new float[bestGenes.Length];
+            for (int i = 0; i < bestGenes.Length; i++)
+            {
+                OverallBestGenes[i] = bestGenes[i];
+            }
+
+            OverallBestFitnessAchieved = GeneticAglorithm.BestFitness;
+        }
+    }
+
     // Update is called once per frame
     void Update()
 	{
 
 		// Update time scale based on Editor value - do this every frame so we capture changes instantly
 		Time.timeScale = timeScale;
-		UpdateText();
-        
+        UpdateOverallBest();
+        UpdateText();
+
+       
 
 		if (running)
 		{
@@ -229,7 +248,6 @@ public class Throwing : MonoBehaviour
                     bestJump = GeneticAglorithm.BestFitness;
                     agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
                     agentManager.ResetBalls();
-
                     agentManager.ThrowBalls();
 
 
@@ -273,24 +291,11 @@ public class Throwing : MonoBehaviour
 
 	private void UpdateText()
     {
-         //var bestGenes= GeneticAglorithm.BestGenes;
-        
-         //var bestThrowInfo = new ShotInfo(bestGenes,MaxImpulse);
-        // If the script has been passed a valid Text object then update that text
+       
         if (onGoingStatusText)
 		{
 			onGoingStatusText.text = agentManager.AreAllBallsFinished().ToString();
 		}
-
-        //if (bestAngleWeighed)
-        //{
-        //    bestAngleWeighed.text = "Angle Of Best" + (bestThrowInfo.Rotation * Vector3.forward).ToString();
-        //}
-
-        //if (bestDistanceWeighed)
-        //{
-        //    bestDistanceWeighed.text = "Impulse Of Best" + bestThrowInfo.InitialImpulse.ToString();
-        //}
 
         if (bestFitnessText)
 		{
@@ -302,12 +307,9 @@ public class Throwing : MonoBehaviour
 			numGenText.text = GeneticAglorithm.Generation.ToString();
 		}
 
-		if (bestJumpStrength)
-		{
-			
-   //         Vector3 throwImpulse = agentManager.CalculateThrowImpulse(GeneticAglorithm.BestGenes);
-
-			//bestJumpStrength.text = throwImpulse.ToString();
-		}
+		if (overallBestFitnessText)
+        {
+            overallBestFitnessText.text = $"Overall best fitness: {OverallBestFitnessAchieved}";
+        }
 	}
 }
