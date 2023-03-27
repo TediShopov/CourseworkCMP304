@@ -7,6 +7,7 @@ public class NaiveShot : MonoBehaviour,ShotPhenotypeRepresentation
     [ HideInInspector] public Quaternion Rotation { get; set; }
     [HideInInspector] public float InitialImpulse { get; set; }
 
+    public Throwing ThrowingGA { get; set; }
     public Vector3 ShotImpulse => (this.Rotation.normalized * Vector3.forward) * this.InitialImpulse;
     public float MaxGenes => 3;
 
@@ -21,12 +22,8 @@ public class NaiveShot : MonoBehaviour,ShotPhenotypeRepresentation
         values[values.Length - 1] = floatGenes[floatGenes.Length - 1];
         Vector3 eulerAngles = new Vector3(values[0], values[1], 0);
         this.Rotation = Quaternion.Euler(eulerAngles).normalized;
-
         this.InitialImpulse = values[values.Length - 1] * MaxImpulse;
-        if (this.InitialImpulse > MaxImpulse)
-        {
-            int a = 3;
-        }
+        
     }
 
     public float[] EncodeGenes()

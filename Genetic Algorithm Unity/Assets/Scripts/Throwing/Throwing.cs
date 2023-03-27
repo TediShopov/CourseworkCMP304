@@ -131,6 +131,8 @@ public class Throwing : MonoBehaviour
 
         //Try set phenotype
         var pheno = PhenotypeGameObject.GetComponent<ShotPhenotypeRepresentation>();
+        pheno.ThrowingGA = this;
+        PhenotypeGameObject.SetActive(true);
         if (pheno!=null)
         {
             agentManager.Phenotype = pheno;

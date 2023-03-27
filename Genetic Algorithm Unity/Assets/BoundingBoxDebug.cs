@@ -55,12 +55,16 @@ public class BoundingBoxDebug : MonoBehaviour
         return found;
     }
 
-    void Start()
-    {
-        //_myBounds.center=ObstacleCoursePrefab.transform.position;
-        SetCenterToTargetChildren(this.ObstacleCoursePrefab.transform);
-        AddChildrenToBounds(this.ObstacleCoursePrefab.transform);
+     void GetBoundingBoxOfHirearchy(Transform t)
+     {
+        SetCenterToTargetChildren(t);
+        AddChildrenToBounds(t);
     }
+
+     void Start()
+     {
+         GetBoundingBoxOfHirearchy(this.ObstacleCoursePrefab.transform);
+     }
 
     void OnDrawGizmosSelected()
     {
