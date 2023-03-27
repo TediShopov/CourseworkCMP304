@@ -318,16 +318,19 @@ public class Throwing : MonoBehaviour
         }
         VisualizedBestShot = Instantiate(AgentPrefab);
         var ball = VisualizedBestShot.GetComponent<AgentThrowableBall>();
-        ball.transform.position = this._agentStartPosition;
-        ball.SecondBeforeDisable = 5.0f;
-        ball.ResetBall();
-
-        ball.Target = _target;
-        var bestPhenotype = PhenotypeGameObject.GetComponent<NaiveShot>();
-        bestPhenotype.MaxImpulse = this.MaxImpulse;
-        bestPhenotype.DecodeGenes(OverallBestGenes);
-        ball.ThrowImpulse = bestPhenotype.ShotImpulse;
+        this.agentManager.SetupShot(ball,OverallBestGenes);
         ball.Throw();
+        //var ball = VisualizedBestShot.GetComponent<AgentThrowableBall>();
+        //ball.transform.position = this._agentStartPosition;
+        //ball.SecondBeforeDisable = 5.0f;
+        //ball.ResetBall();
+
+        //ball.Target = _target;
+        //var bestPhenotype = PhenotypeGameObject.GetComponent<NaiveShot>();
+        //bestPhenotype.MaxImpulse = this.MaxImpulse;
+        //bestPhenotype.DecodeGenes(OverallBestGenes);
+        //ball.ThrowImpulse = bestPhenotype.ShotImpulse;
+        //ball.Throw();
     }
 
     private Coroutine TestingFitnessCoroutine;

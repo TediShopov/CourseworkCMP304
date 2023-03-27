@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using static UnityEngine.GraphicsBuffer;
 
 public class BallAgentManager 
 {
@@ -15,7 +16,25 @@ public class BallAgentManager
     public float SecondsAlive = 10.0f;
 
     public ShotPhenotypeRepresentation Phenotype;
-	public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject AgentPrefab)
+    public GameObject VisualizedBestShot;
+
+    void ResetBall(AgentThrowableBall ball)
+    {
+        ball.ResetBall();
+        ball.transform.position = BallStartPosition;
+        ball.SecondBeforeDisable = SecondsAlive;
+        ball.Target = TargetToSet;
+    }
+
+    public void SetupShot(AgentThrowableBall ball,float[] genes)
+    {
+        ResetBall(ball);
+        Phenotype.DecodeGenes(genes);
+        ball.ThrowImpulse = Phenotype.ShotImpulse;
+        //ball.Throw();
+    }
+
+    public BallAgentManager(uint numberOfBalls,Vector3 startPosition, float maxImpulse,GameObject AgentPrefab)
     {
         this.MaxImpulse=maxImpulse;
         ;
@@ -49,12 +68,7 @@ public class BallAgentManager
         foreach (var ballObj in BallAgents)
         {
             var ball = ballObj.GetComponent<AgentThrowableBall>();
-           
-            ball.ResetBall();
-            ball.transform.position = BallStartPosition;
-            ball.SecondBeforeDisable = SecondsAlive;
-            ball.Target = TargetToSet;
-			
+            ResetBall(ball);
         }
 	}
 
