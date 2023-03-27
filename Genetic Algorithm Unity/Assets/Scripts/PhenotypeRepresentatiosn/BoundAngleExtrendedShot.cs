@@ -2,13 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoundedAngleShot : MonoBehaviour, ShotPhenotypeRepresentation
+public class BoundAngleExtrendedShot : MonoBehaviour, ShotPhenotypeRepresentation
 {
     public Throwing ThrowingGA { get; set; }
 
     private GameObject ObstacleCoursePrefab;
     //By the rules of the game the ball always start at 0,0,0
-    public Vector3 StartPosition=new Vector3(0,0,0);
+    public Vector3 StartPosition = new Vector3(0, 0, 0);
 
     [HideInInspector] public Quaternion Rotation { get; set; }
     [HideInInspector] public float InitialImpulse { get; set; }
@@ -17,6 +17,7 @@ public class BoundedAngleShot : MonoBehaviour, ShotPhenotypeRepresentation
 
     private Bounds _myBounds = new Bounds(Vector3.zero, new Vector3(0, 0, 0));
     public Vector2 YAngleRange = new Vector2();
+    public Vector2 XAngleRange = new Vector2();
 
 
 
@@ -77,14 +78,14 @@ public class BoundedAngleShot : MonoBehaviour, ShotPhenotypeRepresentation
     public Vector3 ShotImpulse => (this.Rotation.normalized * Vector3.forward) * this.InitialImpulse;
     public float MaxGenes => 3;
 
-    
+
 
     public void DecodeGenes(float[] floatGenes)
     {
 
         float[] values = new float[floatGenes.Length];
         //X angle representation
-        values[0] = Helpers.ConvertFromRange(floatGenes[1], 0, 1,-90, 90);
+        values[0] = Helpers.ConvertFromRange(floatGenes[1], 0, 1, -90, XAngleRange.x);
         //Limited Y anlge representation
 
         values[1] = Helpers.ConvertFromRange(floatGenes[0], 0, 1, this.YAngleRange.x, this.YAngleRange.y);
@@ -98,8 +99,8 @@ public class BoundedAngleShot : MonoBehaviour, ShotPhenotypeRepresentation
 
     public float[] EncodeGenes()
     {
-        float[] encoded=new float[3];
-        encoded[0] = Helpers.ConvertFromRange(this.Rotation.x, -90,90, 0, 1);
+        float[] encoded = new float[3];
+        encoded[0] = Helpers.ConvertFromRange(this.Rotation.x, -90, XAngleRange.x, 0, 1);
         encoded[1] = Helpers.ConvertFromRange(this.Rotation.y, YAngleRange.x, YAngleRange.y, 0, 1);
 
         encoded[2] = this.InitialImpulse / MaxImpulse;
@@ -108,23 +109,24 @@ public class BoundedAngleShot : MonoBehaviour, ShotPhenotypeRepresentation
 
     void OnEnable()
     {
-        this.ObstacleCoursePrefab=  this.ThrowingGA.ObstacleCourse;
+        this.ObstacleCoursePrefab = this.ThrowingGA.ObstacleCourse;
         GetBoundingBoxOfHirearchy(this.ObstacleCoursePrefab.transform);
 
 
-        var dirToXMin = (new Vector3(_myBounds.min.x, 0, _myBounds.min.z) - Vector3.forward ).normalized;
-        var dirToXMax = ( new Vector3(_myBounds.max.x, 0, _myBounds.min.z) - Vector3.forward).normalized;
+        var dirToXMin = (new Vector3(_myBounds.min.x, 0, _myBounds.min.z) - Vector3.forward).normalized;
+        var dirToXMax = (new Vector3(_myBounds.max.x, 0, _myBounds.min.z) - Vector3.forward).normalized;
         YAngleRange.x = Vector3.SignedAngle(Vector3.forward, dirToXMin, Vector3.up);
         YAngleRange.y = Vector3.SignedAngle(Vector3.forward, dirToXMax, Vector3.up);
 
-       
+        var dirToYMin = (new Vector3(0, _myBounds.min.y, _myBounds.min.z) - Vector3.forward).normalized;
+        XAngleRange.x = Vector3.SignedAngle(Vector3.forward, dirToYMin, Vector3.right);
     }
 
     void OnDrawGizmos()
     {
         // Display the explosion radius when selected
         //Renderer.bounds.
-        Gizmos.color=Color.red;
+        Gizmos.color = Color.red;
         Gizmos.DrawWireCube(_myBounds.center, _myBounds.size);
     }
 }
