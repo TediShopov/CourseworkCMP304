@@ -60,18 +60,21 @@ using Random = System.Random;
 
 
             int currentMember=0;
-            //if (RouletteDistibutions[0]== Single.NaN)
-            //{
-            //    return;
-            //}
+        if (RouletteDistibutions[0] == Single.NaN)
+        {
+            return;
+        }
 
-            while (StochasticSamplingSelections.Count != RouletteDistibutions.Count * 2)
+        while (StochasticSamplingSelections.Count != RouletteDistibutions.Count * 2)
             {
+                if (currentMember>=RouletteDistibutions.Count)
+                {
+                    currentMember = 0;
+                }
                 if (r < RouletteDistibutions[currentMember])
                 {
                     //Add the memeber two times since we are taking twice as many parents for sexual reproduction
                     StochasticSamplingSelections.Add(currentMember);
-
                     StochasticSamplingSelections.Add(currentMember);
 
                 r += maxR;

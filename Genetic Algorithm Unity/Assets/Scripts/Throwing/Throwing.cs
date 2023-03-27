@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Threading;
 using System.Xml.Serialization;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.Experimental.AI;
 using UnityEngine.UI;
 using Quaternion = UnityEngine.Quaternion;
 using Random = System.Random;
@@ -133,9 +136,7 @@ public class Throwing : MonoBehaviour
             agentManager.Phenotype = pheno;
 
         }
-        //agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
-        //agentManager.ResetBalls();
-        //agentManager.ThrowBalls();
+      
     }
 
     public float WeightOfClosesDistanceH = 20;
@@ -147,27 +148,34 @@ public class Throwing : MonoBehaviour
         float score = 0;
         DNA<float> dna = GeneticAglorithm.Population[index];
         var ball = agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
-        float closeToOptimalDistance = 10 - ball.ClosestDistanceReached;
-        closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
-        closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
-      //  closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
+        return GameScoreDebug(ball);
+    }
 
+
+    private float GameScoreDebug(AgentThrowableBall ballDebug)
+    {
+        float score = 0;
+        float closeToOptimalDistance = 10 - ballDebug.ClosestDistanceReached;
+
+        if (ballDebug.IsHitTarget)
+        {
+            closeToOptimalDistance = 1;
+        }
+        else
+        {
+            closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
+            closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
+            //closeToOptimalDistance = Mathf.Pow(closeToOptimalDistance, 2.0f);
+        }
 
         var targetPosition = _target.transform.position;
 
-        int hitMultiplier = ball.ScoreModifiersHit + 1;
-        if (hitMultiplier>=2 && ball.IsHitTarget)
-        {
-            int a = 3;
-        }
+        int hitMultiplier = ballDebug.ScoreModifiersHit + 1;
 
-        if (ball.IsHitGround)
-        {
-            score = 0;
-        }
-       
+        score += (closeToOptimalDistance * hitMultiplier) * (WeightOfClosesDistanceH);
 
-        score += (closeToOptimalDistance*hitMultiplier) * (WeightOfClosesDistanceH);
+
+
         return score;
     }
 
@@ -224,7 +232,6 @@ public class Throwing : MonoBehaviour
 
 		// Update time scale based on Editor value - do this every frame so we capture changes instantly
 		Time.timeScale = timeScale;
-        UpdateOverallBest();
         UpdateText();
 
        
@@ -242,10 +249,12 @@ public class Throwing : MonoBehaviour
             {
                 if (agentManager.AreAllBallsFinished())
                 {
+                   
 
                     //WorstThrowDistance = GetWorstThrowDistance();
                     GeneticAglorithm.NewGeneration();
                     bestJump = GeneticAglorithm.BestFitness;
+                    UpdateOverallBest();
                     agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
                     agentManager.ResetBalls();
                     agentManager.ThrowBalls();
@@ -289,7 +298,47 @@ public class Throwing : MonoBehaviour
 		}
 	}
 
-	private void UpdateText()
+    private GameObject VisualizedBestShot = null;
+    public void resimulateBestOverall()
+    {
+        if (TestingFitnessCoroutine ==  null)
+        {
+            TestingFitnessCoroutine= StartCoroutine(TestFitnessAfter());
+        }
+
+    }
+
+    void ResimulateThrow()
+    {
+        if (VisualizedBestShot != null)
+        {
+            DestroyImmediate(VisualizedBestShot);
+        }
+        VisualizedBestShot = Instantiate(AgentPrefab);
+        var ball = VisualizedBestShot.GetComponent<AgentThrowableBall>();
+        ball.transform.position = this._agentStartPosition;
+        ball.SecondBeforeDisable = 5.0f;
+        ball.ResetBall();
+
+        ball.Target = _target;
+        var bestPhenotype = PhenotypeGameObject.GetComponent<NaiveShot>();
+        bestPhenotype.MaxImpulse = this.MaxImpulse;
+        bestPhenotype.DecodeGenes(OverallBestGenes);
+        ball.ThrowImpulse = bestPhenotype.ShotImpulse;
+        ball.Throw();
+    }
+
+    private Coroutine TestingFitnessCoroutine;
+    IEnumerator TestFitnessAfter()
+    {
+        ResimulateThrow();
+        yield return new WaitForSeconds(5.0f);
+        GameScoreDebug(VisualizedBestShot.GetComponent<AgentThrowableBall>());
+        StopCoroutine(TestingFitnessCoroutine);
+        TestingFitnessCoroutine = null;
+    }
+
+    private void UpdateText()
     {
        
         if (onGoingStatusText)

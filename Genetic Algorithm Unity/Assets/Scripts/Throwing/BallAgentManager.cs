@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 public class BallAgentManager 
 {
@@ -24,7 +25,7 @@ public class BallAgentManager
         {
             var ballAdd = GameObject.Instantiate(AgentPrefab, startPosition, new Quaternion());
             ballAdd.GetComponent<AgentThrowableBall>().Target = GameObject.FindGameObjectWithTag("Target");
-            BallAgents.Add(GameObject.Instantiate(AgentPrefab, startPosition, new Quaternion()));
+            BallAgents.Add(ballAdd);
 		}
     }
 
@@ -60,16 +61,32 @@ public class BallAgentManager
 	public void ThrowBalls()
 	{
 		foreach (GameObject agent in BallAgents)
-		{
-			AgentThrowableBall ballScript = agent.GetComponent<AgentThrowableBall>();
-			if (ballScript)
-			{
-                ballScript.Throw();
-			}
-		}
+        {
+            ThrowBallObject(agent);
+        }
 	}
 
-    
+    public  void ThrowBallObject(GameObject agent)
+    {
+        AgentThrowableBall ballScript = agent.GetComponent<AgentThrowableBall>();
+        if (ballScript)
+        {
+            ballScript.Throw();
+        }
+    }
+
+
+    void UpdateThrowImpulse(GameObject agent, DNA<float> dna)
+    {
+        AgentThrowableBall script = agent.GetComponent<AgentThrowableBall>();
+        if (script)
+        {
+            Phenotype.DecodeGenes(dna.Genes);
+            script.ThrowImpulse = Phenotype.ShotImpulse;
+        }
+    }
+
+
 
     public void UpdateAgentThrowImpulse(List<DNA<float>> genomes)
 	{
@@ -78,14 +95,7 @@ public class BallAgentManager
 		{
 			DNA<float> dna = genomes[i];
 			GameObject agent = BallAgents[i];
-
-
-			AgentThrowableBall script = agent.GetComponent<AgentThrowableBall>();
-			if (script)
-            {
-                Phenotype.DecodeGenes(dna.Genes);
-                script.ThrowImpulse = Phenotype.ShotImpulse;
-            }
+            UpdateThrowImpulse(agent,dna);
 		}
 	}
 

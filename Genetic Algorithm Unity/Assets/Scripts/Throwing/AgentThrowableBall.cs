@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public class AgentThrowableBall : MonoBehaviour
@@ -19,12 +20,10 @@ public class AgentThrowableBall : MonoBehaviour
     public float BiggestYReached = 0;
     private Rigidbody rb;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         ResetBall();
         rb = this.GetComponent<Rigidbody>();
-       
-
     }
 
     IEnumerator SetInactiveAfter()
@@ -36,11 +35,13 @@ public class AgentThrowableBall : MonoBehaviour
 
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (Target == null)
         {
             return; }
+
+        if (!IsAcitve) { return;}
         float currentDistance = Vector3.Distance(this.transform.position, Target.transform.position);
         if (currentDistance < ClosestDistanceReached)
         {
@@ -67,7 +68,12 @@ public class AgentThrowableBall : MonoBehaviour
         {
             StopCoroutine(_disablingAfter);
         }
-
+        rb = this.GetComponent<Rigidbody>();
+        //if (rb.velocity != Vector3.zero)
+        //{
+        //    int a = 3;
+        //}
+        rb.velocity = Vector3.zero;
         _disablingAfter = StartCoroutine(DisableAfter());
     }
 
