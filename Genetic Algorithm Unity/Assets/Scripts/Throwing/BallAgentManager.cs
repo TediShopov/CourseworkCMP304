@@ -26,6 +26,15 @@ public class BallAgentManager
         ball.Target = TargetToSet;
     }
 
+    public void Clear()
+    {
+        foreach (var ball in this.BallAgents)
+        {
+            GameObject.Destroy(ball);
+        }
+        this.BallAgents.Clear();
+    }
+
     public void SetupShot(AgentThrowableBall ball,float[] genes)
     {
         ResetBall(ball);

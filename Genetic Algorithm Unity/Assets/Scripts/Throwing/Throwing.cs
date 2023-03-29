@@ -59,23 +59,25 @@ public class Throwing : MonoBehaviour
     public float[] OverallBestGenes = null;
 
 
+
     private BallAgentManager agentManager;      // Manager for handling a jumping agents we need to make
     private System.Random random;           // Random for the RNG
     private bool running = false;           // Flag for if the GeneticAglorithm is to run
     private bool _initializedFirstGeneration = false;
 
-    private int _maxIterations = 100;
-
-    private int _currentIterations = 0;
-
-    private float WorstThrowDistance = 1000;
 
     private Vector3 _agentStartPosition = new Vector3(0, 0, 0);
     private GameObject _target;
 
     // Use this for initialization
 
-
+    void OnDisable()
+    {
+      
+        agentManager.Clear();
+        Destroy(ObstacleCourse);
+      
+    }
 
 
 
@@ -134,24 +136,26 @@ public class Throwing : MonoBehaviour
         float score = 0;
         float closeToOptimalDistance = 10 - ballDebug.ClosestDistanceReached;
 
-        if (ballDebug.IsHitTarget)
-        {
-            closeToOptimalDistance = 1;
-        }
-        else
-        {
-            closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
-            closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
-        }
+        //if (ballDebug.IsHitTarget)
+        //{
+        //    closeToOptimalDistance = 1;
+        //}
+        //else
+        //{
+        //    closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
+        //    closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
+        //}
 
-        var targetPosition = _target.transform.position;
+        //var targetPosition = _target.transform.position;
 
-        int hitMultiplier = ballDebug.ScoreModifiersHit + 1;
+        //int hitMultiplier = ballDebug.ScoreModifiersHit + 1;
 
-        score += (closeToOptimalDistance * hitMultiplier) * (WeightOfClosesDistanceH);
+        //score += (closeToOptimalDistance * hitMultiplier) * (WeightOfClosesDistanceH);
 
+        float hitMultiplier = Helpers.ConvertFromRange( ballDebug.ScoreModifiersHit + 1,0,4,0,1);
+        //score = hitMultiplier * hitMultiplier;
 
-
+        score = hitMultiplier * WeightOfClosesDistanceH;
         return score;
     }
 
@@ -174,6 +178,8 @@ public class Throwing : MonoBehaviour
     void GenerationFinished()
     {
         Debug.Log($"Selection strategy of  generation {SelectionAlgorithm.gameObject.name}");
+        this.gameObject.SetActive(false);
+
     }
 
     // Update is called once per frame
@@ -206,6 +212,7 @@ public class Throwing : MonoBehaviour
                     if (GeneticAglorithm.Generation > MaxGenerations)
                     {
                         GenerationFinished();
+                        return;
                     }
                     agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
                     agentManager.ResetBalls();

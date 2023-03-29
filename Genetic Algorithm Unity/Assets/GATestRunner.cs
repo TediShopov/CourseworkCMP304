@@ -4,14 +4,16 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 
 
 [System.Serializable]
-public class TestStrategyContainer<T>
+public class TestStrategyContainer<T> 
 {
-    public int StartIndex=0;
-    public int EndIndex=10;
+    public int StartIndex = 0;
+    public int EndIndex = 10;
     public GameObject ContainerOfStrategies;
 
     public T this[int i]
@@ -20,11 +22,11 @@ public class TestStrategyContainer<T>
         {
             if (i < StartIndex)
             {
-               return _strategies[StartIndex];
+                return _strategies[StartIndex];
             }
-            else if (i>EndIndex)
+            else if (i >= EndIndex)
             {
-                return _strategies[EndIndex];
+                return _strategies[EndIndex-1];
             }
             else
             {
@@ -33,14 +35,24 @@ public class TestStrategyContainer<T>
         }
     }
 
+  
+
     public void SetStrategies()
     {
         foreach (var selectionAlgorithm in ContainerOfStrategies.GetComponentsInChildren<T>())
             _strategies.Add(selectionAlgorithm);
+
+        if (this.EndIndex> _strategies.Count)
+        {
+            this.EndIndex = _strategies.Count;
+        }
     }
 
-    private List<T> _strategies=new List<T>();
 
+
+    private List<T> _strategies = new List<T>();
+
+   
 }
 
 //Establishes set of discreet testing variables, bu given lower bound, increment and steps
@@ -52,13 +64,27 @@ public class TestVariableSet
     public int Iterations;
 
     public float HigherBound => LowerBound + Iterations * Increment;
-
     //Gets the N-th iteration if one exist, if not gets the HigherBound
     public float this[int i]
     {
         get { return LowerBound + i * Increment; }
     }
+
+   
 }
+
+
+struct GASetupData
+{
+    public int selectionIndex;
+    public int phenotypeIndex;
+    public int obstacleCourseIndex;
+    public int mutationIndex;
+    public int populationIndex;
+    public int crossoverIndex;
+    public bool IsSetup;
+}
+
 
 //Sets the properties of each new genetic algorithms, as well as the sample sizes of the test performed.
 // Stored the defined data in predefined struct and fires and event when GA is completed.
@@ -73,27 +99,58 @@ public class GATestRunner : MonoBehaviour
 
     public TestStrategyContainer<FloatBasedRecombination> CrossoverStrategies;
 
-    public TestStrategyContainer<Transform> ObstacleCourses; 
+    public TestStrategyContainer<ObstacleCourse> ObstacleCourses;
 
     public TestVariableSet MutationRateTestSet;
     public TestVariableSet PopulationTestVariableSet;
-    
+
 
 
     // Start is called before the first frame update
     void Start()
     {
-      
-       
+        SelectionStrategies.SetStrategies();
+        PhenotypeRepresentations.SetStrategies();
+        CrossoverStrategies.SetStrategies();
+        ObstacleCourses.SetStrategies();
+
+        newGaSetupData.IsSetup = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (this.ThrowingGA.gameObject.activeSelf==false)
+        {
+            DoOnFinish();
+            waitingForGAFinish = false;
+        }
+
+        if (newGaSetupData.IsSetup==false)
+        {
+            SetupNewGA();
+        }
     }
 
-    void RunAlgorithms()
+    public Thread TestThread;
+
+    public void StartTests()
+    {
+        TestThread = new Thread(RunAlgorithms);
+        this.ThrowingGA.onButtonClickUnique();
+        TestThread.Start();
+    }
+
+    public void OnDestroy()
+    {
+        breakThread = true;
+    }
+
+    bool breakThread=false;
+    bool waitingForGAFinish=false;
+    
+    private GASetupData newGaSetupData;
+    private void RunAlgorithms()
     {
         //Phenotype representation loop
         for (int phenotypeIndex = PhenotypeRepresentations.StartIndex; phenotypeIndex < PhenotypeRepresentations.EndIndex; phenotypeIndex++)
@@ -118,13 +175,40 @@ public class GATestRunner : MonoBehaviour
                             for (int populationIndex = 0; populationIndex < this.PopulationTestVariableSet.Iterations; populationIndex++)
                             {
 
+                                if (breakThread)
+                                {
+                                    return;
+                                }
 
-                                ThrowingGA.SelectionAlgorithm = SelectionStrategies[selectionIndex];
-                                ThrowingGA.Phenotype = PhenotypeRepresentations[phenotypeIndex];
-                                ThrowingGA.ObstacleCourse = ObstacleCourses[obstacleCourseIndex].gameObject;
-                                ThrowingGA.mutationRate = MutationRateTestSet[mutationIndex];
-                                ThrowingGA.BallCount = (uint)Math.Ceiling(PopulationTestVariableSet[populationIndex]);
-                                ThrowingGA.CrossoverAlgorithm = CrossoverStrategies[crossoverIndex];
+                                newGaSetupData.selectionIndex = selectionIndex;
+                                newGaSetupData.phenotypeIndex=phenotypeIndex;
+                                newGaSetupData.crossoverIndex=crossoverIndex;
+                                newGaSetupData.obstacleCourseIndex=obstacleCourseIndex;
+                                newGaSetupData.mutationIndex=mutationIndex;
+                                newGaSetupData.populationIndex = populationIndex;
+                                newGaSetupData.IsSetup = false;
+
+                                //Block till unity thread sets up the genetic algorthm
+                                
+                                while (!newGaSetupData.IsSetup)
+                                {
+                                    if (breakThread)
+                                    {
+                                        return;
+                                    }
+                                }
+
+                                
+
+                                waitingForGAFinish = true;
+                                while (waitingForGAFinish)
+                                {
+                                    if (breakThread)
+                                    {
+                                        return;
+                                    }
+                                }
+
 
                             }
                         }
@@ -138,5 +222,28 @@ public class GATestRunner : MonoBehaviour
 
 
         }
+    }
+
+    private void SetupNewGA()
+    {
+        ThrowingGA.gameObject.SetActive(false);
+
+        ThrowingGA.SelectionAlgorithm = SelectionStrategies[newGaSetupData.selectionIndex];
+        ThrowingGA.Phenotype = PhenotypeRepresentations[newGaSetupData.phenotypeIndex];
+        ThrowingGA.ObstacleCourse = ObstacleCourses[newGaSetupData.obstacleCourseIndex].gameObject;
+        ThrowingGA.mutationRate = MutationRateTestSet[newGaSetupData.mutationIndex];
+        ThrowingGA.BallCount = (uint)Math.Ceiling(PopulationTestVariableSet[newGaSetupData.populationIndex]);
+        ThrowingGA.CrossoverAlgorithm = CrossoverStrategies[newGaSetupData.crossoverIndex];
+        newGaSetupData.IsSetup = true;
+
+        ThrowingGA.gameObject.SetActive(true);
+        //this.ThrowingGA.onButtonClickUnique();
+
+    }
+
+
+    private void DoOnFinish()
+    {
+      //this.ThrowingGA.Set
     }
 }
