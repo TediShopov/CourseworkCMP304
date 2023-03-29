@@ -2,16 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NaiveShot : MonoBehaviour,ShotPhenotypeRepresentation
+public class NaiveShot : ShotPhenotypeRepresentation
 {
-    [ HideInInspector] public Quaternion Rotation { get; set; }
-    [HideInInspector] public float InitialImpulse { get; set; }
-
-    public Throwing ThrowingGA { get; set; }
-    public Vector3 ShotImpulse => (this.Rotation.normalized * Vector3.forward) * this.InitialImpulse;
-    public float MaxGenes => 3;
-
-    public   void DecodeGenes(float[] floatGenes)
+    public override  void DecodeGenes(float[] floatGenes)
     {
         float[] values = new float[floatGenes.Length];
         for (int i = 0; i < floatGenes.Length - 1; i++)
@@ -26,7 +19,7 @@ public class NaiveShot : MonoBehaviour,ShotPhenotypeRepresentation
         
     }
 
-    public float[] EncodeGenes()
+    public override float[] EncodeGenes()
     {
         var toReturn = new List<float>();
         var euler = this.Rotation.eulerAngles;
@@ -37,8 +30,4 @@ public class NaiveShot : MonoBehaviour,ShotPhenotypeRepresentation
 
         return toReturn.ToArray();
     }
-
-    [SerializeField] public float MaxImpulse;
-
-
 }

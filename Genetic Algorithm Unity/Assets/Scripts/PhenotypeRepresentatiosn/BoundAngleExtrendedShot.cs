@@ -2,19 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoundAngleExtrendedShot : MonoBehaviour, ShotPhenotypeRepresentation
+public class BoundAngleExtrendedShot :  ShotPhenotypeRepresentation
 {
-    public Throwing ThrowingGA { get; set; }
 
     private GameObject ObstacleCoursePrefab;
-    //By the rules of the game the ball always start at 0,0,0
-    public Vector3 StartPosition = new Vector3(0, 0, 0);
-
-    [HideInInspector] public Quaternion Rotation { get; set; }
-    [HideInInspector] public float InitialImpulse { get; set; }
-
-    public int MaxImpulse;
-
     private Bounds _myBounds = new Bounds(Vector3.zero, new Vector3(0, 0, 0));
     public Vector2 YAngleRange = new Vector2();
     public Vector2 XAngleRange = new Vector2();
@@ -74,13 +65,7 @@ public class BoundAngleExtrendedShot : MonoBehaviour, ShotPhenotypeRepresentatio
         AddChildrenToBounds(t);
     }
 
-
-    public Vector3 ShotImpulse => (this.Rotation.normalized * Vector3.forward) * this.InitialImpulse;
-    public float MaxGenes => 3;
-
-
-
-    public void DecodeGenes(float[] floatGenes)
+    public override void DecodeGenes(float[] floatGenes)
     {
 
         float[] values = new float[floatGenes.Length];
@@ -97,7 +82,7 @@ public class BoundAngleExtrendedShot : MonoBehaviour, ShotPhenotypeRepresentatio
         this.InitialImpulse = values[2] * MaxImpulse;
     }
 
-    public float[] EncodeGenes()
+    public override float[] EncodeGenes()
     {
         float[] encoded = new float[3];
         encoded[0] = Helpers.ConvertFromRange(this.Rotation.x, -90, XAngleRange.x, 0, 1);

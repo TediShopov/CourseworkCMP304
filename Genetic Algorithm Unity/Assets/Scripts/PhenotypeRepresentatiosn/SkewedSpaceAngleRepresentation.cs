@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
@@ -53,6 +54,9 @@ class ScalarRange : IComparable<ScalarRange>
         return this.Min == other.Min && this.Max == other.Max;
     }
 
+    public float Center => (this.Min + this.Max)/2.0f;
+    public float Distance => (this.Max - this.Min);
+
     public static bool operator>(ScalarRange l, ScalarRange r)
     {
         return l.Min > r.Max;
@@ -82,18 +86,20 @@ class ScalarRange : IComparable<ScalarRange>
     }
 }
 
-public class SkewedSpaceAngleRepresentation : MonoBehaviour,ShotPhenotypeRepresentation
+struct RangeModifer
 {
-    public Throwing ThrowingGA { get; set; }
+    public float Max;
+    public float Modifier;
+}
+
+public class SkewedSpaceAngleRepresentation : ShotPhenotypeRepresentation
+{
 
     private GameObject ObstacleCoursePrefab;
     //By the rules of the game the ball always start at 0,0,0
     public Vector3 StartPosition = new Vector3(0, 0, 0);
 
-    [HideInInspector] public Quaternion Rotation { get; set; }
-    [HideInInspector] public float InitialImpulse { get; set; }
-
-    public int MaxImpulse;
+   
 
     private Bounds _myBounds = new Bounds(Vector3.zero, new Vector3(0, 0, 0));
     public Vector2 YAngleRange = new Vector2();
@@ -103,22 +109,90 @@ public class SkewedSpaceAngleRepresentation : MonoBehaviour,ShotPhenotypeReprese
     private List<ScalarRange> TargetsInXSpace=new List<ScalarRange>();
     private List<ScalarRange> StrecthedTargetsSpace = new List<ScalarRange>();
 
-    void StretchTargetSpace(in List<ScalarRange> targets, float emptySpaceWeight=2.0f)
+    List<RangeModifer> rangeModifers=new List<RangeModifer>();
+
+    void FilLRangeModifiers(in List<ScalarRange> targets, float emptySpaceWeight = 2.0f, float min = -90, float max = 90)
     {
-       
+
         float distanceToMove;
-        for (int i = 0; i < targets.Count; i++)
+        float modifer = 0;
+        float from = 0;
+        float to = 0;
+        for (int i = -1; i < targets.Count; i++)
         {
             if (i < 0)
             {
                 var rangeTwo = targets[i + 1];
-                distanceToMove= (rangeTwo.Min) / emptySpaceWeight;
+                from = rangeTwo.Min;
+
+                distanceToMove = (rangeTwo.Min - min) / emptySpaceWeight;
+                rangeTwo.Min -= distanceToMove;
+                to=rangeTwo.Min;
+                rangeModifers.Add(new RangeModifer() {Max = rangeTwo.Center,Modifier = to/from });
+            }
+            else if (i >= targets.Count - 1)
+            {
+                var rangeOne = targets[i];
+                from = rangeOne.Max;
+                distanceToMove = (max - rangeOne.Max) / emptySpaceWeight;
+                rangeOne.Max += distanceToMove;
+                to = rangeOne.Max;
+                rangeModifers.Add(new RangeModifer() { Max = max, Modifier = to / from });
+
+            }
+            else
+            {
+                var rangeOne = targets[i];
+                var rangeTwo = targets[i + 1];
+
+                distanceToMove = ((rangeTwo.Min - rangeOne.Max) / emptySpaceWeight) / 2.0f;
+
+                float middleOfRanges = (rangeOne.Center + rangeTwo.Center) / 2.0f;
+                float middleOfRange2 = rangeTwo.Center;
+                //move upper bound
+                from = rangeOne.Max;
+
+                rangeOne.Max += distanceToMove;
+                to = rangeOne.Max;
+
+                float modifierLeft = to / from;
+
+                //Move lowe bound
+                from = rangeTwo.Min;
+                rangeTwo.Min -= distanceToMove;
+                to = rangeTwo.Min;
+
+
+                float modifierRight = to / from;
+                rangeModifers.Add(new RangeModifer() { Max = middleOfRanges, Modifier = modifierLeft });
+
+                rangeModifers.Add(new RangeModifer() { Max = middleOfRange2, Modifier = modifierRight });
+
+
+                
+
+            }
+
+        }
+    }
+
+
+    void StretchTargetSpace(in List<ScalarRange> targets, float emptySpaceWeight=2.0f,float min=-90, float max=90)
+    {
+       
+        float distanceToMove;
+        for (int i = -1; i < targets.Count; i++)
+        {
+            if (i < 0)
+            {
+                var rangeTwo = targets[i + 1];
+                distanceToMove= ( rangeTwo.Min - min) / emptySpaceWeight;
                 rangeTwo.Min -= distanceToMove;
             }
             else if (i >= targets.Count - 1)
             {
                 var rangeOne = targets[i];
-                distanceToMove = (_myBounds.max.x - rangeOne.Max) / emptySpaceWeight;
+                distanceToMove = (max - rangeOne.Max) / emptySpaceWeight;
                 rangeOne.Max += distanceToMove;
             }
             else
@@ -251,17 +325,17 @@ public class SkewedSpaceAngleRepresentation : MonoBehaviour,ShotPhenotypeReprese
         SetCenterToTargetChildren(t);
         AddChildrenToBounds(t);
 
-        this.StrecthedTargetsSpace = new List<ScalarRange>(this.TargetsInXSpace);
-        //StretchTargetSpace(this.StrecthedTargetsSpace);
+       
     }
 
+     float GetYAngle(float val)
+    {
+        float toAngle = Helpers.ConvertFromRange(val,0, 1, this.YAngleRange.x, this.YAngleRange.y);
+        return toAngle;
 
-    public Vector3 ShotImpulse => (this.Rotation.normalized * Vector3.forward) * this.InitialImpulse;
-    public float MaxGenes => 3;
+    }
 
-
-
-    public void DecodeGenes(float[] floatGenes)
+    public override void DecodeGenes(float[] floatGenes)
     {
 
         float[] values = new float[floatGenes.Length];
@@ -278,7 +352,7 @@ public class SkewedSpaceAngleRepresentation : MonoBehaviour,ShotPhenotypeReprese
         this.InitialImpulse = values[2] * MaxImpulse;
     }
 
-    public float[] EncodeGenes()
+    public override float[] EncodeGenes()
     {
         float[] encoded = new float[3];
         encoded[0] = Helpers.ConvertFromRange(this.Rotation.x, -90, 90, 0, 1);
@@ -288,16 +362,60 @@ public class SkewedSpaceAngleRepresentation : MonoBehaviour,ShotPhenotypeReprese
         return encoded;
     }
 
+    List<ScalarRange> DeepCopyRanges( List<ScalarRange> other)
+    {
+        var toReturn = new List<ScalarRange>();
+        foreach ( var range in other ) 
+        {
+            toReturn.Add( new ScalarRange(range.Min,range.Max) );
+        }
+
+        return toReturn;
+    }
+
     void OnEnable()
     {
         this.ObstacleCoursePrefab = this.ThrowingGA.ObstacleCourse;
         GetBoundingBoxOfHirearchy(this.ObstacleCoursePrefab.transform);
+        this.StrecthedTargetsSpace = DeepCopyRanges(this.TargetsInXSpace);
+       
 
 
-        var dirToXMin = (new Vector3(_myBounds.min.x, 0, _myBounds.min.z) - Vector3.zero).normalized;
-        var dirToXMax = (new Vector3(_myBounds.max.x, 0, _myBounds.max.z) - Vector3.zero).normalized;
-        YAngleRange.x = Vector3.SignedAngle(Vector3.forward, dirToXMin, Vector3.up);
-        YAngleRange.y = Vector3.SignedAngle(Vector3.forward, dirToXMax, Vector3.up);
+
+        ScalarRange range= GetAngleBoundsFromForwardVector(_myBounds);
+        YAngleRange.x = range.Min;
+        YAngleRange.y = range.Max;
+
+        //var dirToXMin = (new Vector3(_myBounds.min.x, 0, _myBounds.min.z) - Vector3.zero).normalized;
+        //var dirToXMax = (new Vector3(_myBounds.max.x, 0, _myBounds.max.z) - Vector3.zero).normalized;
+        //YAngleRange.x = Vector3.SignedAngle(Vector3.forward, dirToXMin, Vector3.up);
+        //YAngleRange.y = Vector3.SignedAngle(Vector3.forward, dirToXMax, Vector3.up);
+
+        StretchTargetSpace(this.StrecthedTargetsSpace, 2, YAngleRange.x, YAngleRange.y);
+
+        FilLRangeModifiers(this.StrecthedTargetsSpace, 2, YAngleRange.x, YAngleRange.y);
+        var listOfModifiedRanges = DeepCopyRanges(this.TargetsInXSpace);
+        foreach (var r in listOfModifiedRanges)
+        {
+            var a= rangeModifers.FirstOrDefault(x => x.Max >= r.Min);
+            r.Min *= a.Modifier;
+            var b = rangeModifers.FirstOrDefault(x => x.Max >= r.Max);
+            r.Max *= b.Modifier;
+
+        }
+
+
+        //Check if equal
+        bool isEqual = true;
+        for (int i = 0; i < StrecthedTargetsSpace.Count; i++)
+        {
+            if (!listOfModifiedRanges[i].Equals(StrecthedTargetsSpace[i]))
+            {
+                isEqual = false;
+            }
+        }
+
+        int z = 3;
 
 
     }
