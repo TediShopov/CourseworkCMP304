@@ -65,17 +65,13 @@ using Random = System.Random;
             return;
         }
 
-        while (StochasticSamplingSelections.Count != RouletteDistibutions.Count * 2)
+        while (StochasticSamplingSelections.Count != RouletteDistibutions.Count /** 2*/)
             {
-                if (currentMember>=RouletteDistibutions.Count)
-                {
-                    currentMember = 0;
-                }
-                if (r < RouletteDistibutions[currentMember])
+                if (currentMember >= RouletteDistibutions.Count || r < RouletteDistibutions[currentMember] )
                 {
                     //Add the memeber two times since we are taking twice as many parents for sexual reproduction
                     StochasticSamplingSelections.Add(currentMember);
-                    StochasticSamplingSelections.Add(currentMember);
+                    //StochasticSamplingSelections.Add(currentMember);
 
                 r += maxR;
                     
@@ -85,13 +81,24 @@ using Random = System.Random;
                     currentMember++;
                 }
             }
+
+        lastPickedIndex = StochasticSamplingSelections.Count - 1;
         }
 
+
+        private int lastPickedIndex;
         DNA<float> PickFromRoulette(System.Random random)
         {
-            var pick = this.StochasticSamplingSelections[StochasticSamplingSelections.Count - 1];
-            this.StochasticSamplingSelections.RemoveAt(StochasticSamplingSelections.Count - 1);
-           return _geneticAglorithm.Population[pick];
+            if (lastPickedIndex < 0)
+            {
+                lastPickedIndex =StochasticSamplingSelections.Count - 1;
+            }
+
+            var pick = this.StochasticSamplingSelections[lastPickedIndex];
+            lastPickedIndex--;
+           // this.StochasticSamplingSelections.RemoveAt(StochasticSamplingSelections.Count - 1);
+
+        return _geneticAglorithm.Population[pick];
         }
 
         public override DNA<float> SelectionStrategy()

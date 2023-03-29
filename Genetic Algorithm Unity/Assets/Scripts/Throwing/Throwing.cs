@@ -11,6 +11,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.Experimental.AI;
 using UnityEngine.UI;
+using static Throwing;
 using Quaternion = UnityEngine.Quaternion;
 using Random = System.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -69,20 +70,29 @@ public class Throwing : MonoBehaviour
     private Vector3 _agentStartPosition = new Vector3(0, 0, 0);
     private GameObject _target;
 
+    public delegate void GenerationEnd();
+    public GenerationEnd OnGenerationEnd;
+
+    public delegate void AlgorithmTerminated();
+    public AlgorithmTerminated OnAlgorithmTerminated;
+
     // Use this for initialization
 
     void OnDisable()
     {
       
         agentManager.Clear();
-        Destroy(ObstacleCourse);
-      
+        DestroyImmediate(ObstacleCourse);
+        _initializedFirstGeneration = false;
+
     }
 
+   
 
 
     void OnEnable()
     {
+       
         // Create the Random class
         random = new System.Random();
 
@@ -136,26 +146,23 @@ public class Throwing : MonoBehaviour
         float score = 0;
         float closeToOptimalDistance = 10 - ballDebug.ClosestDistanceReached;
 
-        //if (ballDebug.IsHitTarget)
-        //{
-        //    closeToOptimalDistance = 1;
-        //}
-        //else
-        //{
-        //    closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
-        //    closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
-        //}
+        if (ballDebug.IsHitTarget)
+        {
+            closeToOptimalDistance = 1;
+        }
+        else
+        {
+            closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
+            closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
+        }
 
-        //var targetPosition = _target.transform.position;
+        var targetPosition = _target.transform.position;
 
-        //int hitMultiplier = ballDebug.ScoreModifiersHit + 1;
+        int hitMultiplier = ballDebug.ScoreModifiersHit + 1;
 
-        //score += (closeToOptimalDistance * hitMultiplier) * (WeightOfClosesDistanceH);
+        score += (closeToOptimalDistance * hitMultiplier) * (WeightOfClosesDistanceH);
 
-        float hitMultiplier = Helpers.ConvertFromRange( ballDebug.ScoreModifiersHit + 1,0,4,0,1);
-        //score = hitMultiplier * hitMultiplier;
-
-        score = hitMultiplier * WeightOfClosesDistanceH;
+        
         return score;
     }
 
@@ -175,12 +182,7 @@ public class Throwing : MonoBehaviour
         }
     }
 
-    void GenerationFinished()
-    {
-        Debug.Log($"Selection strategy of  generation {SelectionAlgorithm.gameObject.name}");
-        this.gameObject.SetActive(false);
-
-    }
+   
 
     // Update is called once per frame
     void Update()
@@ -206,14 +208,27 @@ public class Throwing : MonoBehaviour
                 if (agentManager.AreAllBallsFinished())
                 {
                     //WorstThrowDistance = GetWorstThrowDistance();
-                    GeneticAglorithm.NewGeneration();
+
+                    GeneticAglorithm.CalculateFitness();
+                    if (this.OnGenerationEnd != null)
+                    {
+                        this.OnGenerationEnd.Invoke();
+                    }
+
                     UpdateOverallBest();
 
                     if (GeneticAglorithm.Generation > MaxGenerations)
                     {
-                        GenerationFinished();
+                        if (this.OnAlgorithmTerminated!=null)
+                        {
+                            this.OnAlgorithmTerminated.Invoke();
+                            //running=false;
+                        }
+                        //this.gameObject.SetActive(false);
                         return;
                     }
+                    GeneticAglorithm.NewGeneration();
+                   
                     agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
                     agentManager.ResetBalls();
                     agentManager.ThrowBalls();
@@ -290,7 +305,11 @@ public class Throwing : MonoBehaviour
 
         if (onGoingStatusText)
         {
-            onGoingStatusText.text = agentManager.AreAllBallsFinished().ToString();
+            if (agentManager.BallAgents.Count>0)
+            {
+                onGoingStatusText.text = agentManager.AreAllBallsFinished().ToString();
+
+            }
         }
 
         if (bestFitnessText)

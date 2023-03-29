@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEngine;
 using System.Linq;
@@ -104,7 +105,7 @@ public class GATestRunner : MonoBehaviour
     public TestVariableSet MutationRateTestSet;
     public TestVariableSet PopulationTestVariableSet;
 
-
+    public string NameOfTestRun;
 
     // Start is called before the first frame update
     void Start()
@@ -115,17 +116,16 @@ public class GATestRunner : MonoBehaviour
         ObstacleCourses.SetStrategies();
 
         newGaSetupData.IsSetup = true;
+
+        this.ThrowingGA.OnGenerationEnd += AppendGeneration;
+        this.ThrowingGA.OnAlgorithmTerminated += WriteToCsvFile;
+        this.ThrowingGA.OnAlgorithmTerminated += AlgorithmTerminated;
+         
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (this.ThrowingGA.gameObject.activeSelf==false)
-        {
-            DoOnFinish();
-            waitingForGAFinish = false;
-        }
-
         if (newGaSetupData.IsSetup==false)
         {
             SetupNewGA();
@@ -242,8 +242,66 @@ public class GATestRunner : MonoBehaviour
     }
 
 
-    private void DoOnFinish()
+    //private void DoOnFinish()
+    //{
+    //  //this.ThrowingGA.Set
+    //  WriteToCsvFile();
+    //}
+    // Set the variable "delimiter" to ", ".
+    string delimiter = ", ";
+
+    // Set the path and filename variable "path", filename being MyTest.csv in this example.
+    // Change SomeGuy for your username.
+    string path => @"Tests\" + NameOfTestRun + ".csv";
+    private void AppendGeneration()
     {
-      //this.ThrowingGA.Set
+        string appendText="";
+
+        foreach (var dna in this.ThrowingGA.GeneticAglorithm.Population)
+        {
+            appendText += dna.Fitness.ToString() + delimiter;
+        }
+
+        appendText += "\n";
+        File.AppendAllText(path,appendText);
+    }
+
+    private void AlgorithmTerminated()
+    {
+        waitingForGAFinish = false;
+
+    }
+
+    private void WriteToCsvFile()
+    {
+        
+
+       
+
+        // This text is added only once to the file.
+        if (!File.Exists(path))
+        {
+            // Create a file to write to.
+            string createText = this.ThrowingGA.SelectionAlgorithm.gameObject.name + delimiter
+                + this.ThrowingGA.CrossoverAlgorithm.gameObject.name + delimiter
+                + this.ThrowingGA.Phenotype.gameObject.name + delimiter
+                + this.ThrowingGA.ObstacleCourse.gameObject.name + delimiter
+                + this.ThrowingGA.mutationRate + delimiter
+                + this.ThrowingGA.BallCount + delimiter;
+            createText += "\n";
+            File.WriteAllText(path, createText);
+        }
+
+        // This text is always added, making the file longer over time
+        // if it is not deleted.
+        string appendText = this.ThrowingGA.SelectionAlgorithm.gameObject.name + delimiter
+                                                                               + this.ThrowingGA.CrossoverAlgorithm.gameObject.name + delimiter
+                                                                               + this.ThrowingGA.Phenotype.gameObject.name + delimiter
+                                                                               + this.ThrowingGA.ObstacleCourse.gameObject.name + delimiter
+                                                                               + this.ThrowingGA.mutationRate + delimiter 
+                                                                               + this.ThrowingGA.BallCount + delimiter;
+        appendText += "\n";
+
+        File.AppendAllText(path, appendText);
     }
 }
