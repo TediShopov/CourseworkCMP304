@@ -29,6 +29,14 @@ public class Throwing : MonoBehaviour
     [SerializeField] public float timeScale = 1;
     [SerializeField] public int MaxGenerations = 150;
 
+    public ShotPhenotypeRepresentation Phenotype;
+    public GASelectionAlgorithmBase<float> SelectionAlgorithm;
+    public FloatBasedRecombination CrossoverAlgorithm;
+    public FitnessFunctionStrategyBase FitnessFunctionStrategy;
+    [SerializeField] public GameObject ObstacleCourse;
+
+
+
 
     [Header("Text Labels")]
     [SerializeField] Text onGoingStatusText;
@@ -41,27 +49,22 @@ public class Throwing : MonoBehaviour
     [SerializeField] Text buttonText;
 
     [Header("Agent Prefab")]
-    [SerializeField] public GameObject AgentPrefab;
+    //[SerializeField] public GameObject AgentPrefab;
 
-    [SerializeField] public GameObject ObstacleCourse;
 
 
 
     public GeneticAglorithm<float> GeneticAglorithm;     // Genetic Aglorithm with each Gene being a float
 
-    public ShotPhenotypeRepresentation Phenotype;
-    public GASelectionAlgorithmBase<float> SelectionAlgorithm;
-    public FloatBasedRecombination CrossoverAlgorithm;
+  
 
     public float MaxImpulse = 15.0f;
 
 
-    public float OverallBestFitnessAchieved = 0;
-    public float[] OverallBestGenes = null;
 
 
 
-    private BallAgentManager agentManager;      // Manager for handling a jumping agents we need to make
+    public BallAgentManager AgentManager;      // Manager for handling a jumping agents we need to make
     private System.Random random;           // Random for the RNG
     private bool running = false;           // Flag for if the GeneticAglorithm is to run
     private bool _initializedFirstGeneration = false;
@@ -76,12 +79,17 @@ public class Throwing : MonoBehaviour
     public delegate void AlgorithmTerminated();
     public AlgorithmTerminated OnAlgorithmTerminated;
 
+    [Header("Debug")]
+    public float OverallBestFitnessAchieved = 0;
+    public float[] OverallBestGenes = null;
+
+
     // Use this for initialization
 
     void OnDisable()
     {
       
-        agentManager.Clear();
+        AgentManager.Clear();
         DestroyImmediate(ObstacleCourse);
         _initializedFirstGeneration = false;
 
@@ -97,22 +105,22 @@ public class Throwing : MonoBehaviour
         random = new System.Random();
 
         // Create our Agent Manager and give them the height and width of grid along with agent prefab
-        agentManager = new BallAgentManager(BallCount, _agentStartPosition, MaxImpulse, AgentPrefab);
+        AgentManager = new BallAgentManager(BallCount, _agentStartPosition, MaxImpulse, FitnessFunctionStrategy.BallScript.gameObject);
 
         // Create genetic algorithm class
         GeneticAglorithm = new GeneticAglorithm<float>(
-            agentManager.BallAgents.Count,
+            AgentManager.BallAgents.Count,
             3, random,
             GetRandomGene,
-            GameScore,
+            FitnessFunctionStrategy.FitnessFunctionByIndex,
             SelectionAlgorithm.SelectionStrategy,
             CrossoverAlgorithm.Recombine,
             mutationRate: mutationRate);
         SelectionAlgorithm.SetGeneticAlgorthm(GeneticAglorithm);
-
+        FitnessFunctionStrategy.ThrowingGA = this;
         ObstacleCourse = Instantiate(ObstacleCourse);
         this._target = GameObject.FindWithTag("Target");
-        agentManager.TargetToSet = _target;
+        AgentManager.TargetToSet = _target;
 
         //Try set phenotype
         var pheno = this.Phenotype;
@@ -122,50 +130,13 @@ public class Throwing : MonoBehaviour
         if (pheno != null)
         {
 
-            agentManager.Phenotype = pheno;
+            AgentManager.Phenotype = pheno;
 
         }
 
     }
 
-    public float WeightOfClosesDistanceH = 20;
-    public float ValueOfYClose = 15;
-
-
-    private float GameScore(int index)
-    {
-        float score = 0;
-        DNA<float> dna = GeneticAglorithm.Population[index];
-        var ball = agentManager.BallAgents[index].GetComponent<AgentThrowableBall>();
-        return GameScoreDebug(ball);
-    }
-
-
-    private float GameScoreDebug(AgentThrowableBall ballDebug)
-    {
-        float score = 0;
-        float closeToOptimalDistance = 10 - ballDebug.ClosestDistanceReached;
-
-        if (ballDebug.IsHitTarget)
-        {
-            closeToOptimalDistance = 1;
-        }
-        else
-        {
-            closeToOptimalDistance = Math.Clamp(closeToOptimalDistance, 0, 10);
-            closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
-        }
-
-        var targetPosition = _target.transform.position;
-
-        int hitMultiplier = ballDebug.ScoreModifiersHit + 1;
-
-        score += (closeToOptimalDistance * hitMultiplier) * (WeightOfClosesDistanceH);
-
-        
-        return score;
-    }
-
+   
 
     void UpdateOverallBest()
     {
@@ -198,14 +169,14 @@ public class Throwing : MonoBehaviour
         {
             if (!_initializedFirstGeneration)
             {
-                agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
-                agentManager.ResetBalls();
-                agentManager.ThrowBalls();
+                AgentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
+                AgentManager.ResetBalls();
+                AgentManager.ThrowBalls();
                 _initializedFirstGeneration = true;
             }
             else
             {
-                if (agentManager.AreAllBallsFinished())
+                if (AgentManager.AreAllBallsFinished())
                 {
                     //WorstThrowDistance = GetWorstThrowDistance();
 
@@ -229,9 +200,9 @@ public class Throwing : MonoBehaviour
                     }
                     GeneticAglorithm.NewGeneration();
                    
-                    agentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
-                    agentManager.ResetBalls();
-                    agentManager.ThrowBalls();
+                    AgentManager.UpdateAgentThrowImpulse(GeneticAglorithm.Population);
+                    AgentManager.ResetBalls();
+                    AgentManager.ThrowBalls();
                 }
             }
         }
@@ -241,11 +212,6 @@ public class Throwing : MonoBehaviour
     {
         return (float)random.NextDouble();
     }
-
-
-
-    public float WeightOfAngle = 20.0f;
-    public float WeightOfDistance = 20.0f;
 
     public void onButtonClickUnique()
     {
@@ -284,9 +250,9 @@ public class Throwing : MonoBehaviour
         {
             DestroyImmediate(VisualizedBestShot);
         }
-        VisualizedBestShot = Instantiate(AgentPrefab);
-        var ball = VisualizedBestShot.GetComponent<AgentThrowableBall>();
-        this.agentManager.SetupShot(ball, OverallBestGenes);
+        VisualizedBestShot = Instantiate(FitnessFunctionStrategy.BallScript.gameObject);
+        var ball = VisualizedBestShot.GetComponent<ThrowableBallBase>();
+        this.AgentManager.SetupShot(ball, OverallBestGenes);
         ball.Throw();
     }
 
@@ -295,7 +261,8 @@ public class Throwing : MonoBehaviour
     {
         ResimulateThrow();
         yield return new WaitForSeconds(5.0f);
-        GameScoreDebug(VisualizedBestShot.GetComponent<AgentThrowableBall>());
+        FitnessFunctionStrategy.FitnessFunction(VisualizedBestShot.GetComponent<ThrowableBallBase>());
+        //GameScoreDebug(VisualizedBestShot.GetComponent<AgentThrowableBall>());
         StopCoroutine(TestingFitnessCoroutine);
         TestingFitnessCoroutine = null;
     }
@@ -305,9 +272,9 @@ public class Throwing : MonoBehaviour
 
         if (onGoingStatusText)
         {
-            if (agentManager.BallAgents.Count>0)
+            if (AgentManager.BallAgents.Count>0)
             {
-                onGoingStatusText.text = agentManager.AreAllBallsFinished().ToString();
+                onGoingStatusText.text = AgentManager.AreAllBallsFinished().ToString();
 
             }
         }

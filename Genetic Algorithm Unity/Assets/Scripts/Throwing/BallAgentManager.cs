@@ -18,12 +18,10 @@ public class BallAgentManager
     public ShotPhenotypeRepresentation Phenotype;
     public GameObject VisualizedBestShot;
 
-    void ResetBall(AgentThrowableBall ball)
+    void ResetBall(ThrowableBallBase ball)
     {
-        ball.ResetBall();
+        ball.Reset();
         ball.transform.position = BallStartPosition;
-        ball.SecondBeforeDisable = SecondsAlive;
-        ball.Target = TargetToSet;
     }
 
     public void Clear()
@@ -35,11 +33,11 @@ public class BallAgentManager
         this.BallAgents.Clear();
     }
 
-    public void SetupShot(AgentThrowableBall ball,float[] genes)
+    public void SetupShot(ThrowableBallBase ball,float[] genes)
     {
         ResetBall(ball);
         Phenotype.DecodeGenes(genes);
-        ball.ThrowImpulse = Phenotype.ShotImpulse;
+        ball.ShotImpulse = Phenotype.ShotImpulse;
         //ball.Throw();
     }
 
@@ -52,7 +50,7 @@ public class BallAgentManager
         for (int i = 0; i < numberOfBalls; i++)
         {
             var ballAdd = GameObject.Instantiate(AgentPrefab, startPosition, new Quaternion());
-            ballAdd.GetComponent<AgentThrowableBall>().Target = GameObject.FindGameObjectWithTag("Target");
+            //ballAdd.GetComponent<ThrowableBallBase>().Target = GameObject.FindGameObjectWithTag("Target");
             BallAgents.Add(ballAdd);
 		}
     }
@@ -61,9 +59,9 @@ public class BallAgentManager
 	{
 		foreach (GameObject agent in BallAgents)
 		{
-            AgentThrowableBall ballScript = agent.GetComponent<AgentThrowableBall>();
+            ThrowableBallBase ballScript = agent.GetComponent<ThrowableBallBase>();
 			//All balls have to have hit a surfac eor the ring of the basket
-			if (ballScript && ballScript.IsAcitve)
+			if (ballScript && ballScript.IsActive)
 			{
 				return false;
 			}
@@ -76,7 +74,7 @@ public class BallAgentManager
 	{
         foreach (var ballObj in BallAgents)
         {
-            var ball = ballObj.GetComponent<AgentThrowableBall>();
+            var ball = ballObj.GetComponent<ThrowableBallBase>();
             ResetBall(ball);
         }
 	}
@@ -91,7 +89,7 @@ public class BallAgentManager
 
     public  void ThrowBallObject(GameObject agent)
     {
-        AgentThrowableBall ballScript = agent.GetComponent<AgentThrowableBall>();
+        ThrowableBallBase ballScript = agent.GetComponent<ThrowableBallBase>();
         if (ballScript)
         {
             ballScript.Throw();
@@ -101,11 +99,11 @@ public class BallAgentManager
 
     void UpdateThrowImpulse(GameObject agent, DNA<float> dna)
     {
-        AgentThrowableBall script = agent.GetComponent<AgentThrowableBall>();
+        ThrowableBallBase script = agent.GetComponent<ThrowableBallBase>();
         if (script)
         {
             Phenotype.DecodeGenes(dna.Genes);
-            script.ThrowImpulse = Phenotype.ShotImpulse;
+            script.ShotImpulse = Phenotype.ShotImpulse;
         }
     }
 

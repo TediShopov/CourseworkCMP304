@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class AgentThrowableBall : MonoBehaviour
+public class AgentThrowableBall : ThrowableBallBase
 {
-    public bool IsAcitve;
     public bool IsHitTarget;
     public bool IsHitGround;
     public int ScoreModifiersHit;
@@ -15,21 +14,13 @@ public class AgentThrowableBall : MonoBehaviour
 
     public GameObject Target;
 
-    public float SecondBeforeDisable = 10.0f;
     public Vector3 ThrowImpulse { get; set; }
     public float BiggestYReached = 0;
-    private Rigidbody rb;
     // Start is called before the first frame update
     void Awake()
     {
-        ResetBall();
+        Reset();
         rb = this.GetComponent<Rigidbody>();
-    }
-
-    IEnumerator SetInactiveAfter()
-    {
-        yield return new WaitForSeconds(5);
-        IsAcitve = false;
     }
 
 
@@ -41,7 +32,7 @@ public class AgentThrowableBall : MonoBehaviour
         {
             return; }
 
-        if (!IsAcitve) { return;}
+        if (!this.IsActive) { return;}
         float currentDistance = Vector3.Distance(this.transform.position, Target.transform.position);
         if (currentDistance < ClosestDistanceReached)
         {
@@ -55,9 +46,10 @@ public class AgentThrowableBall : MonoBehaviour
         }
     }
 
-    public void ResetBall()
+    public override void Reset()
     {
-        IsAcitve = true;
+        this.IsActive = true;
+        Target = GameObject.FindWithTag("Target");
         IsHitTarget=false;
         IsHitGround=false;
         ScoreModifiersHit = 0;
@@ -69,21 +61,11 @@ public class AgentThrowableBall : MonoBehaviour
             StopCoroutine(_disablingAfter);
         }
         rb = this.GetComponent<Rigidbody>();
-        //if (rb.velocity != Vector3.zero)
-        //{
-        //    int a = 3;
-        //}
         rb.velocity = Vector3.zero;
+        
         _disablingAfter = StartCoroutine(DisableAfter());
     }
 
-    private Coroutine _disablingAfter;
-    IEnumerator DisableAfter()
-    {
-        yield return new WaitForSeconds(SecondBeforeDisable);
-        StopCoroutine(_disablingAfter);
-        IsAcitve = false;
-    }
 
     public void Throw()
     {
@@ -92,7 +74,7 @@ public class AgentThrowableBall : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (IsAcitve)
+        if (this.IsActive)
         {
             if (collision.gameObject.layer == LayerMask.NameToLayer("ScoreModifiers"))
             {
@@ -101,7 +83,7 @@ public class AgentThrowableBall : MonoBehaviour
             else if (collision.gameObject.CompareTag("Ground"))
             {
                 IsHitGround = true;
-                IsAcitve = false;
+                this.IsActive = false;
             }
         }
 
@@ -110,7 +92,7 @@ public class AgentThrowableBall : MonoBehaviour
 
     void OnTriggerEnter(Collider collider)
     {
-        if (IsAcitve && collider.gameObject.CompareTag("Target"))
+        if (this.IsActive && collider.gameObject.CompareTag("Target"))
         {
             float currentDistance = Vector3.Distance(this.transform.position, Target.transform.position);
             if (currentDistance < ClosestDistanceReached)
@@ -118,7 +100,7 @@ public class AgentThrowableBall : MonoBehaviour
                 ClosestPositionReached = this.transform.position;
                 ClosestDistanceReached = currentDistance;
             }
-            IsAcitve = false;
+            this.IsActive = false;
             IsHitTarget = true;
         }
     }
