@@ -40,7 +40,8 @@ public class TestStrategyContainer<T>
 
     public void SetStrategies()
     {
-        foreach (var selectionAlgorithm in ContainerOfStrategies.GetComponentsInChildren<T>())
+        
+        foreach (var selectionAlgorithm in ContainerOfStrategies.GetComponentsInChildren<T>(true))
             _strategies.Add(selectionAlgorithm);
 
         if (this.EndIndex> _strategies.Count)

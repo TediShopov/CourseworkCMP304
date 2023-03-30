@@ -127,3 +127,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7baad485918ba5647a8890c66c0df16c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsActive: 0
+  ShotImpulse: {x: 0, y: 0, z: 0}
+  SecondBeforeDisable: 5
+  Target: {fileID: 0}
+  ClosesDistanceReachedAfterImpact: 0
+  IsHitTarget: 0
+  IsHitGround: 0

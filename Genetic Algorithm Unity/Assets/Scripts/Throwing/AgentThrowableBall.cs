@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class AgentThrowableBall : ThrowableBallBase
 {
-    public bool IsHitTarget;
     public bool IsHitGround;
     public int ScoreModifiersHit;
 

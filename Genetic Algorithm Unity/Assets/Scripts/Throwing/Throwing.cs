@@ -1,20 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Numerics;
-using System.Reflection;
-using System.Threading;
-using System.Xml.Serialization;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.Experimental.AI;
 using UnityEngine.UI;
-using static Throwing;
-using Quaternion = UnityEngine.Quaternion;
-using Random = System.Random;
-using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 
@@ -42,8 +31,9 @@ public class Throwing : MonoBehaviour
     [SerializeField] Text onGoingStatusText;
     [SerializeField] Text bestFitnessText;
     [SerializeField] Text overallBestFitnessText;
-
     [SerializeField] Text numGenText;
+    [SerializeField] Text bestOverallFitnesses;
+    [SerializeField] Text bestOverallScores;
 
     [Header("Button Text")]
     [SerializeField] Text buttonText;
@@ -80,11 +70,65 @@ public class Throwing : MonoBehaviour
     public AlgorithmTerminated OnAlgorithmTerminated;
 
     [Header("Debug")]
-    public float OverallBestFitnessAchieved = 0;
-    public float[] OverallBestGenes = null;
+    //public float OverallBestFitnessAchieved = 0;
+    //public float[] OverallBestGenes = null;
+
+    public List<DNA<float>> TopNOverallBest=new List<DNA<float>>();
+    public List<DNA<float>> ScoredNOverallBest = new List<DNA<float>>();
+
+    [Range(1,50)]public int NumberOfOverallBestShotsToStore;
+
+    void UpdateTopNOverallBestList()
+    {
+        //search through the wehole population
+        float minimumAcquiredFitnessValue = 0;
+        if (TopNOverallBest.Count > 0)
+        {
+            minimumAcquiredFitnessValue = TopNOverallBest.Min(x => x.Fitness);
+        }
+
+        foreach (var dna in this.GeneticAglorithm.Population)
+        {
+            if (dna.Fitness > minimumAcquiredFitnessValue)
+            {
+                TopNOverallBest.Add(dna);
+            }
+        }
+
+        //Make sure sort is in ascending order
+        TopNOverallBest.Sort((a, b) => b.Fitness.CompareTo(a.Fitness));
+        TopNOverallBest = TopNOverallBest.Take(NumberOfOverallBestShotsToStore).ToList();
+    }
+
+    void UpdateScoredShotsTopNBestList()
+    {
+        //search through the wehole population
+        float minimumAcquiredFitnessValue = 0;
+        if (ScoredNOverallBest.Count > 0)
+        {
+            minimumAcquiredFitnessValue = ScoredNOverallBest.Min(x => x.Fitness);
+        }
 
 
-    // Use this for initialization
+        for (int i = 0; i < this.AgentManager.BallAgents.Count; i++)
+        {
+            var throwable = this.AgentManager.BallAgents[i].GetComponent<ThrowableBallBase>();
+            if (throwable.IsHitTarget)
+            {
+                var dnaOfThrowable = this.GeneticAglorithm.Population[i];
+                if (dnaOfThrowable.Fitness > minimumAcquiredFitnessValue)
+                {
+                    ScoredNOverallBest.Add(dnaOfThrowable);
+                }
+            }
+        }
+
+       
+
+        //Make sure sort is in ascending order
+        ScoredNOverallBest.Sort((a, b) => b.Fitness.CompareTo(a.Fitness));
+        ScoredNOverallBest = ScoredNOverallBest.Take(NumberOfOverallBestShotsToStore).ToList();
+    }
 
     void OnDisable()
     {
@@ -136,25 +180,6 @@ public class Throwing : MonoBehaviour
 
     }
 
-   
-
-    void UpdateOverallBest()
-    {
-        if (GeneticAglorithm.BestFitness > OverallBestFitnessAchieved)
-        {
-            var bestGenes = GeneticAglorithm.BestGenes;
-            OverallBestGenes = new float[bestGenes.Length];
-            for (int i = 0; i < bestGenes.Length; i++)
-            {
-                OverallBestGenes[i] = bestGenes[i];
-            }
-
-            OverallBestFitnessAchieved = GeneticAglorithm.BestFitness;
-        }
-    }
-
-   
-
     // Update is called once per frame
     void Update()
     {
@@ -186,13 +211,15 @@ public class Throwing : MonoBehaviour
                         this.OnGenerationEnd.Invoke();
                     }
 
-                    UpdateOverallBest();
-
+                  //  UpdateOverallBest();
+                    UpdateTopNOverallBestList();
+                    UpdateScoredShotsTopNBestList();
                     if (GeneticAglorithm.Generation > MaxGenerations)
                     {
                         if (this.OnAlgorithmTerminated!=null)
                         {
                             this.OnAlgorithmTerminated.Invoke();
+                            this.gameObject.SetActive(false);
                             //running=false;
                         }
                         //this.gameObject.SetActive(false);
@@ -234,34 +261,56 @@ public class Throwing : MonoBehaviour
         }
     }
 
-    private GameObject VisualizedBestShot = null;
+    private List<GameObject> VisualizedShots = new List<GameObject>();
     public void resimulateBestOverall()
     {
         if (TestingFitnessCoroutine == null)
         {
-            TestingFitnessCoroutine = StartCoroutine(TestFitnessAfter());
+            TestingFitnessCoroutine = StartCoroutine(TestFitnessAfter(TopNOverallBest));
         }
 
     }
 
-    void ResimulateThrow()
+    public void resimulateBestScored()
     {
-        if (VisualizedBestShot != null)
+        if (TestingFitnessCoroutine == null)
         {
-            DestroyImmediate(VisualizedBestShot);
+            TestingFitnessCoroutine = StartCoroutine(TestFitnessAfter(ScoredNOverallBest));
         }
-        VisualizedBestShot = Instantiate(FitnessFunctionStrategy.BallScript.gameObject);
-        var ball = VisualizedBestShot.GetComponent<ThrowableBallBase>();
-        this.AgentManager.SetupShot(ball, OverallBestGenes);
-        ball.Throw();
+
     }
+
+    void ResimulateBestFitnessThrows(List<DNA<float>> collection)
+    {
+        if (VisualizedShots.Count != 0)
+        {
+            foreach (var shot in this.VisualizedShots)
+            {
+                DestroyImmediate(shot);
+            }
+        }
+
+        foreach (var shotDna in collection)
+        {
+            var ballObj = Instantiate(FitnessFunctionStrategy.BallScript.gameObject);
+            VisualizedShots.Add(ballObj);
+            var ball = ballObj.GetComponent<ThrowableBallBase>();
+            this.AgentManager.SetupShot(ball, shotDna.Genes);
+            ball.Throw();
+        }
+
+
+      
+    }
+
+   
 
     private Coroutine TestingFitnessCoroutine;
-    IEnumerator TestFitnessAfter()
+    IEnumerator TestFitnessAfter(List<DNA<float>> collection)
     {
-        ResimulateThrow();
+        ResimulateBestFitnessThrows(collection);
         yield return new WaitForSeconds(5.0f);
-        FitnessFunctionStrategy.FitnessFunction(VisualizedBestShot.GetComponent<ThrowableBallBase>());
+        //FitnessFunctionStrategy.FitnessFunction(VisualizedBestShot.GetComponent<ThrowableBallBase>());
         //GameScoreDebug(VisualizedBestShot.GetComponent<AgentThrowableBall>());
         StopCoroutine(TestingFitnessCoroutine);
         TestingFitnessCoroutine = null;
@@ -289,9 +338,39 @@ public class Throwing : MonoBehaviour
             numGenText.text = GeneticAglorithm.Generation.ToString();
         }
 
-        if (overallBestFitnessText)
+        if (bestOverallFitnesses)
         {
-            overallBestFitnessText.text = $"Overall best fitness: {OverallBestFitnessAchieved}";
+            if (TopNOverallBest.Count!=0)
+            {
+                bestOverallFitnesses.text = "";
+
+
+                int maxIterationCount = Math.Min(TopNOverallBest.Count, Math.Min(NumberOfOverallBestShotsToStore, 5));
+                for (int i = 0; i < maxIterationCount; i++)
+                {
+                    bestOverallFitnesses.text += $"{TopNOverallBest[i].Fitness.ToString("0.00")},  ";
+                }
+
+               
+            }
+        }
+
+
+        if (bestOverallScores)
+        {
+            if (ScoredNOverallBest.Count != 0)
+            {
+                bestOverallScores.text = "";
+
+
+                int maxIterationCount = Math.Min(ScoredNOverallBest.Count, Math.Min(NumberOfOverallBestShotsToStore, 5));
+                for (int i = 0; i < maxIterationCount; i++)
+                {
+                    bestOverallScores.text += $"{ScoredNOverallBest[i].Fitness.ToString("0.00")},  ";
+                }
+
+
+            }
         }
     }
 }

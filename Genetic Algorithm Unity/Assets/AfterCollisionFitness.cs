@@ -6,8 +6,8 @@ using UnityEngine;
 public class AfterCollisionFitness : FitnessFunctionStrategyBase
 {
     public int ClosestDistanceWeight=100;
-    public int ToTargetXZAngleWeight=30;
-    public int ToTargetYZAngleWeight = 30;
+    public int AngleToTargetWeight=30;
+    public float PerHitMultiplier = 1.5f;
 
     public override float FitnessFunction(ThrowableBallBase b)
     {
@@ -18,8 +18,7 @@ public class AfterCollisionFitness : FitnessFunctionStrategyBase
         closeToOptimalDistance = Helpers.ConvertFromRange(closeToOptimalDistance, 0, 10, 0, 1);
 
 
-        float angleScoreXZ = 0;
-        float angleScoreYZ = 0;
+        float angleScore = 0;
         if (ballDebug.Collisions.Count > 0)
         {
             Vector3 lastImpulse = ballDebug.Collisions[ballDebug.Collisions.Count - 1].impulse;
@@ -27,17 +26,24 @@ public class AfterCollisionFitness : FitnessFunctionStrategyBase
                                ballDebug.Collisions[ballDebug.Collisions.Count - 1].GetContact(0).point;
 
 
-             angleScoreXZ = 180 - Math.Abs(Vector3.SignedAngle(lastImpulse, toTarget, Vector3.up));
-            angleScoreXZ = Helpers.ConvertFromRange(angleScoreXZ, 0, 180, 0, 1);
+            float angleScoreXZ = 180 - Math.Abs(Vector3.SignedAngle(lastImpulse, toTarget, Vector3.up));
+            angleScoreXZ = Helpers.ConvertFromRange(angleScoreXZ, 0, 180, 0, 0.5f);
 
 
-             angleScoreYZ = 180 - Math.Abs(Vector3.SignedAngle(lastImpulse, toTarget, Vector3.up));
-            angleScoreYZ = Helpers.ConvertFromRange(angleScoreYZ, 0, 180, 0, 1);
+            float angleScoreYZ = 180 - Math.Abs(Vector3.SignedAngle(lastImpulse, toTarget, Vector3.right));
+            angleScoreYZ = Helpers.ConvertFromRange(angleScoreYZ, 0, 180, 0, 0.5f);
+
+            angleScore = angleScoreXZ + angleScoreYZ;
         }
-       
+
+        float collisionScore = (PerHitMultiplier * ballDebug.Collisions.Count);
+
+        float closestDistanceMultiplierBasedonCollisions =
+            Helpers.ConvertFromRange(ballDebug.Collisions.Count, 0, 4, 1, 2);
 
 
-        score += (closeToOptimalDistance * ClosestDistanceWeight) + angleScoreXZ * ToTargetXZAngleWeight + angleScoreYZ * ToTargetYZAngleWeight;
+
+        score += (closeToOptimalDistance * ClosestDistanceWeight * closestDistanceMultiplierBasedonCollisions) + angleScore*AngleToTargetWeight + collisionScore;
 
 
         return score;

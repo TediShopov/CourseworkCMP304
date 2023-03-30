@@ -6,7 +6,8 @@ using UnityEngine;
 public abstract class ThrowableBallBase : MonoBehaviour
 {
     public bool IsActive;
-    public Vector3 ShotImpulse; 
+    public Vector3 ShotImpulse;
+    public bool IsHitTarget = false;
     public abstract void Reset();
 
     protected Rigidbody rb;
@@ -23,7 +24,7 @@ public abstract class ThrowableBallBase : MonoBehaviour
 
 
     protected Coroutine _disablingAfter;
-    public float SecondBeforeDisable;
+    public float SecondBeforeDisable=5.0f;
     protected IEnumerator DisableAfter()
     {
         yield return new WaitForSeconds(SecondBeforeDisable);

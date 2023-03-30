@@ -6,10 +6,9 @@ using static UnityEngine.GraphicsBuffer;
 public class CollisionDirectionBall :  ThrowableBallBase
 {
     public GameObject Target;
-    public List<Collision> Collisions;
-    public float ClosesDistanceReachedAfterImpact;
-    public bool IsHitTarget;
-    public bool IsHitGround;
+    public List<Collision> Collisions=new List<Collision>();
+    public float ClosesDistanceReachedAfterImpact=float.MaxValue;
+    public bool IsHitGround=false;
 
     void Awake()
     {
@@ -68,6 +67,7 @@ public class CollisionDirectionBall :  ThrowableBallBase
     {
         this.IsActive = true;
         this.Collisions = new List<Collision>();
+        this.ClosesDistanceReachedAfterImpact=float.MaxValue;
         Target = GameObject.FindWithTag("Target");
         IsHitTarget = false;
         IsHitGround = false;
